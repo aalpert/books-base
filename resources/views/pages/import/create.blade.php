@@ -30,6 +30,19 @@
                        id="importPublishers">
             </div>
 
+            <div class="form-group">
+                <label>Очистка базы</label>
+                <select class="form-control">
+                    <option value="all" selected>По всему источнику</option>
+                    <option value="publishers">По выбранным издательствам</option>
+                    <option value="none">Не выполнять очистку</option>
+                </select>
+                <small class="form-text text-muted" name="clear">
+                    Книги, которых нет в прайсе, будут помечены как не в наличии и будут удалены.
+                </small>
+            </div>
+            </div>
+
             <button type="submit" class="btn btn-primary">Импортировать</button>
         </form>
     </div>

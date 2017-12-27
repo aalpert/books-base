@@ -9,6 +9,8 @@
                 <tr>
                     <th scope="col">#</th>
                     <th scope="col">Название</th>
+                    <th scope="col">Драйвер</th>
+                    <th scope="col">Книг</th>
                     <th scope="col">Сохранен</th>
                     <th scope="col" width="1%">&nbsp</th>
                 </tr>
@@ -18,6 +20,8 @@
                     <tr>
                         <th scope="row">{{$source->id}}</th>
                         <td>{{$source->title}}</td>
+                        <td>{{$source->driver}}</td>
+                        <td>{{$source->books->count()}}</td>
                         <td>{{$source->updated_at->diffForHumans()}}</td>
                         <td nowrap="">
 

@@ -40,6 +40,7 @@ class SourceController extends Controller
         // Save the Source
         $source = new Source;
         $source->title = request('title');
+        $source->driver = request('driver');
         $source->save();
 
         // Go back to Sources list with success message

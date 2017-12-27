@@ -35,8 +35,10 @@ class ImportController extends Controller
             'source_id' => request('source'),
             'filename' => 'storage/app/' . $path,
             'limit_publishers' => request('publishers'),
+            'clear' =>request('clear'),
         ]);
-        $this->dispatch(new \App\Jobs\Import($import));
+
+        \App\Jobs\Import::withChain([new ImportRemove($import)])->dispatch($import);
 
 
         session()->flash('success_message', 'Добавлен в очередь');

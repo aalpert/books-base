@@ -54,8 +54,7 @@ class Import extends Model
                             $import->updated++;
                             $import->addLog($book, 'updated');
                             $book->update();
-                        }
-                        else {
+                        } else {
                             // Simply update the updated_at field so we can do the clean up later
                             $book->touch();
                         }
@@ -109,10 +108,15 @@ class Import extends Model
      */
     public function remove()
     {
+        Log::info('Cleaning up...');
+        if (!$this->shouldClean()) {
+            Log::info('Cleanup is not needed');
+            return $this;
+        }
         $books = \App\Book::where('updated_at', '<', $this->created_at)->where('source_id', '=', $this->source_id);
 
         // Limit to the publishers that were processed in this run
-        if (!empty($this->limit_publishers && false)) {
+        if (!empty($this->limit_publishers && $this->clear == 'publishers')) {
             $publishers = explode('||', $this->limit_publishers);
             if (count($publishers)) {
                 $publishers = \App\Publisher::whereIn('title', $publishers);
@@ -130,7 +134,7 @@ class Import extends Model
             $pn = 0;
             $pp = 100;
             while ($total > 0) {
-                foreach ($books->skip($pn*$pp)->take($pp)->get()->all() as $book) {
+                foreach ($books->skip($pn * $pp)->take($pp)->get()->all() as $book) {
                     $this->addLog($book, 'deleted');
                     $this->removed++;
                     $this->update();
@@ -142,5 +146,14 @@ class Import extends Model
             $this->status = 'finished';
             $this->update();
         }
+    }
+
+    /**
+     * Defines if the import needs to clear the database after run
+     * @return bool
+     */
+    public function shouldClean()
+    {
+        return !empty($this->clear) && $this->clear != 'none';
     }
 }
