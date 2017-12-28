@@ -47,3 +47,4 @@ Route::get('/series/{series}', 'SeriesController@show')->name('series.show');
 
 Route::get('/categories', 'CategoryController@index')->name('category.list');
 Route::get('/category/{category}', 'CategoryController@show')->name('category.show');
+
