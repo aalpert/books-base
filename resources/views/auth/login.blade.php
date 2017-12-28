@@ -24,8 +24,8 @@
             <form method="POST" action="{{route('auth.login')}}">
                 {{csrf_field()}}
                 <div class="form-group">
-                    <label>Email</label>
-                    <input type="email" class="form-control" value="" name="email">
+                    <label>Имя пользователя</label>
+                    <input type="text" class="form-control" value="" name="username">
                 </div>
 
                 <div class="form-group">
