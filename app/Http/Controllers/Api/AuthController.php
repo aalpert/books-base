@@ -13,6 +13,7 @@ class AuthController extends Controller
     {
         $user = User::where("username", $request->username)->first();
 
+//        dd($user);
         if ($user && Hash::check($request->password, $user->password) && $user->role == 'client') {
             return response($user->createToken('Books')->accessToken, 200);
         } else {

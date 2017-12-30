@@ -37,6 +37,8 @@ class Book extends Resource
             'pages' => $this->pages,
             'sku' => $this->sku,
             'isbn' => $this->isbn,
+            'price' => $this->price,
+            'image' => $this->image,
             'additional_notes' => $this->additional_notes,
 
             'publisher' => [

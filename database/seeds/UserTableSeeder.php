@@ -17,6 +17,7 @@ class UserTableSeeder extends Seeder
         $user->name = 'Andrey Alpert';
         $user->role = 'admin';
         $user->password = '$2y$10$GpBkqII4DXpo275Dvhw8ie3aVN/YwS4TpnTcIK5r.8Fp29GyPeNx6';
+        $user->api_token = str_random(60);
         $user->save();
 
         $user  = new \App\User();
@@ -25,6 +26,7 @@ class UserTableSeeder extends Seeder
         $user->name = 'Евгений Альперт';
         $user->role = 'admin';
         $user->password = '$2y$10$zxMUNPO/KKKLlRQzeER/7uDfV7aUYea8aBncRs/sH0r8LPajai5L.';
+        $user->api_token = str_random(60);
         $user->save();
 
         $user  = new \App\User();
@@ -33,6 +35,7 @@ class UserTableSeeder extends Seeder
         $user->name = 'Людмила Альперт';
         $user->role = 'user';
         $user->password = '$2y$10$cPfHrXBTI7HVjj1qxepRKOJXWFFNksIaD6sxMDrmawzoHFqBBHY6G';
+        $user->api_token = str_random(60);
         $user->save();
 
         $user  = new \App\User();
@@ -41,6 +44,7 @@ class UserTableSeeder extends Seeder
         $user->name = 'BooksNook';
         $user->role = 'client';
         $user->password = '$2y$10$je3ofBW6LKLxeCPAhEPvPexQyA6bJfWM75NANX2ArbB4J.6sOkvfe';
+        $user->api_token = str_random(60);
         $user->save();
     }
 }
