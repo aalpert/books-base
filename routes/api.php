@@ -15,6 +15,6 @@ use Illuminate\Http\Request;
 
 Route::middleware(['auth:api'])->group(function () {
     Route::get('/books', 'Api\BooksController@index');
-    Route::get('/book/image', 'Api\BooksController@image');
+    Route::get('/book/{sku}/image', 'Api\BooksController@image');
 });
 

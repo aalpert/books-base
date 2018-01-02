@@ -41,7 +41,7 @@ class ImportController extends Controller
         \App\Jobs\Import::withChain([new ImportRemove($import)])->dispatch($import);
 
 
-        session()->flash('success_message', 'Добавлен в очередь');
+        session()->flash('success_message', 'Импортирован');
         return redirect()->route('import.list');
     }
 

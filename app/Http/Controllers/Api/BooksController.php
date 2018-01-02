@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Book;
 use App\Http\Resources\BookCollection;
+use App\Publisher;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 
@@ -16,18 +17,27 @@ class BooksController extends Controller
      */
     public function index(Request $request)
     {
-
-        $book = Book::with('authors')->with('categories')->paginate(5);
-        return new BookCollection($book);
+        $books = Book::with('authors')->with('categories');
+        if (!empty(request('publishers', ''))) {
+            $publishers = explode('||', request('publishers', ''));
+            if (count($publishers)) {
+                $publishers = Publisher::whereIn('title', $publishers);
+                if ($publishers->count()) {
+                    $books->whereIn('publisher_id', $publishers->pluck('id')->all());
+                }
+            }
+        }
+        $books = $books->paginate(50);
+        return new BookCollection($books);
     }
 
     /**
      * Get the image file content
      * @return \Illuminate\Contracts\Routing\ResponseFactory|\Symfony\Component\HttpFoundation\Response
      */
-    public function image()
+    public function image($sku)
     {
-        $image = Book::where('sku', request('sku'))->pluck('image')->first();
+        $image = Book::where('sku', $sku)->pluck('image')->first();
         if ($image) {
             return response()->file(storage_path() . '/app/images/covers/' . $image);
         }
