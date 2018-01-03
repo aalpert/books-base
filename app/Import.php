@@ -2,86 +2,41 @@
 
 namespace App;
 
+use App\Import\Galina;
 use Illuminate\Database\Eloquent\Model;
-use Excel;
 use Illuminate\Support\Facades\Log;
+use Maatwebsite\Excel\Facades\Excel;
 
 class Import extends Model
 {
-    protected $fillable = ['source_id', 'filename', 'limit_publishers'];
+    protected $fillable = ['source_id', 'params', 'limit_publishers'];
+
+
+    protected $casts = [
+        'params' => 'array',
+    ];
 
     public function start()
     {
         set_time_limit(0);
-        $import = $this;
-        $import->status = 'started';
-        $import->update();
-        $limitations = false;
-        if (!empty($this->limit_publishers)) {
-            $limitations = array_map(function ($a) {
-                return mb_strtolower(trim($a));
-            }, explode('||', $this->limit_publishers));
+        $this->status = 'started';
+        $this->update();
+
+        switch ($this->source['driver']) {
+            case 'galina':
+                $importId = $this->id;
+                Excel::filter('chunk')->load($this->params['filename'])->chunk(10, function ($results) use ($importId) {
+                   Galina::process($results, $importId);
+                });
+                $this->fresh();
+                $this->status = 'finished';
+                break;
+            default:
+                $this->status = 'failed';
         }
-        Excel::filter('chunk')->load($import->filename)->chunk(1000, function ($results) use ($import, $limitations) {
-            $import = \App\Import::find($import->id);
-            $source_title = Source::find($import->source_id)->pluck('title')->first();
-            foreach ($results as $raw) {
-                $import->total++;
-                if (empty(trim($raw['reference'])) ||
-                    empty(trim($raw['isbn'])) ||
-                    empty($raw['price']) ||
-                    !is_numeric($raw['price']) ||
-                    // filter out by Publisher
-                    (!empty($limitations) && count($limitations) && !in_array(mb_strtolower(trim($raw['publisher'])), $limitations))
-                ) {
-                    $import->skipped++;
-                    $import->update();
-                    continue;
-                }
-                $raw['price'] = number_format((float)$raw['price'], 2, '.', '');
+//        dd($this->params);
 
-                $sku = \App\Book::skuFromIsbn($raw['isbn']);
-
-                $books = \App\Book::where('sku', '=', $sku)->get();
-                if ($books->count() > 0) {
-                    // Updating existing
-                    foreach ($books->all() as $book) {
-                        // updating source
-                        if ($book->source_id != $import->source_id) {
-                            $book->source_id = $import->source_id;
-                            $book->update();
-                        }
-                        // Availability
-                        if (!$book->available()) {
-                            $book->makeAvailable();
-                        }
-                        // updating price
-                        if ((number_format((float)$book->price, 2, '.', '')) != $raw['price']) {
-                            $book->price = $raw['price'];
-                            $import->updated++;
-                            $import->addLog($book, 'updated');
-                            $book->update();
-                        } else {
-                            // Simply update the updated_at field so we can do the clean up later
-                            $book->touch();
-                        }
-                    }
-                } else {
-                    // Creating new
-                    $raw = \App\ImportBook::process($raw);
-                    $raw['source'] = $import->source_id;
-                    $book = new \App\Book;
-                    $book->prepare($raw)->save();
-                    $book->attach($raw);
-                    $import->created++;
-                    $import->addLog($book, 'created');
-                }
-                $import->update();
-            }
-        });
-        $import = \App\Import::find($import->id);
-        $import->status = 'finished';
-        $import->update();
+        $this->update();
     }
 
     public function source()

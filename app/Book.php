@@ -219,10 +219,6 @@ class Book extends Model
     {
         $this->availability = $state;
         $this->update();
-//        $this->history()->create([
-//            'type' => 'availability',
-//            'value' => $state,
-//        ]);
         return $this;
     }
 

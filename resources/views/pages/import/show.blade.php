@@ -19,12 +19,12 @@
                 @endif
             </dd>
         </dl>
-        @if(!empty($import->limit_publishers))
+        @if(!empty($import->params['limit_publishers']))
             <hr>
             <dl class="row">
                 <dt class="col-sm-2">Издательства:</dt>
                 <dd class="col-sm-10">
-                    @foreach(explode('||', $import->limit_publishers) as $publisher)
+                    @foreach($import->params['limit_publishers'] as $publisher)
                         <span class="badge badge-secondary">{{$publisher}}</span>
                     @endforeach
                 </dd>

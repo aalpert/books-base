@@ -22,9 +22,7 @@ class CreateImportsTable extends Migration
             $table->integer('created')->default(0);
             $table->integer('updated')->default(0);
             $table->integer('removed')->default(0);
-            $table->string('filename');
-
-            $table->text('limit_publishers')->nullable();
+            $table->json('params');
 
             $table->enum('clear', ['none', 'all', 'publishers'])->default('all');
 

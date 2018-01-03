@@ -1,13 +1,72 @@
 <?php
 
-namespace App;
+namespace App\Import;
 
-use Excel;
-use Storage;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 
-
-class ImportBook
+class Galina extends Model
 {
+    public static function process($results, $importId)
+    {
+        $import = \App\Import::find($importId);
+        $limitations = $import->params['limit_publishers'];
+//        dd($limitations);
+        foreach ($results as $raw) {
+            $import->total++;
+            if (empty(trim($raw['reference'])) ||
+                empty(trim($raw['isbn'])) ||
+                empty($raw['price']) ||
+                !is_numeric($raw['price']) ||
+                // filter out by Publisher
+                (!empty($limitations) && count($limitations) && !in_array(mb_strtolower(trim($raw['publisher'])), $limitations))
+            ) {
+                $import->skipped++;
+                $import->update();
+                continue;
+            }
+            $raw['price'] = number_format((float)$raw['price'], 2, '.', '');
+
+            $sku = \App\Book::skuFromIsbn($raw['isbn']);
+
+            $books = \App\Book::where('sku', '=', $sku)->get();
+            if ($books->count() > 0) {
+                // Updating existing
+                foreach ($books->all() as $book) {
+                    // updating source
+                    if ($book->source_id != $import->source_id) {
+                        $book->source_id = $import->source_id;
+                        $book->update();
+                    }
+                    // Availability
+                    if (!$book->available()) {
+                        $book->makeAvailable();
+                    }
+                    // updating price
+                    if ((number_format((float)$book->price, 2, '.', '')) != $raw['price']) {
+                        $book->price = $raw['price'];
+                        $import->updated++;
+                        $import->addLog($book, 'updated');
+                        $book->update();
+                    } else {
+                        // Simply update the updated_at field so we can do the clean up later
+                        $book->touch();
+                    }
+                }
+            } else {
+                // Creating new
+                $raw = Galina::prepare($raw);
+                $raw['source'] = $import->source_id;
+                $book = new \App\Book;
+                $book->prepare($raw)->save();
+                $book->attach($raw);
+                $import->created++;
+                $import->addLog($book, 'created');
+            }
+            $import->update();
+        }
+    }
+
     private static function exctract($html, $needle, $end = '<BR>')
     {
         if (!stristr($html, $needle)) {
@@ -24,7 +83,7 @@ class ImportBook
      * @param $raw
      * @return array
      */
-    public static function process($raw)
+    public static function prepare($raw)
     {
         // http://92.39.237.181/Photo/550000/551809.jpg
         $SOURCEURL = 'http://92.39.237.181';
@@ -87,5 +146,4 @@ class ImportBook
 
         return $book;
     }
-
 }

@@ -34,6 +34,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/import', 'ImportController@index')->name('import.list');
     Route::post('/import', 'ImportController@store')->name('import.store');
     Route::get('/import/create', 'ImportController@create')->name('import.create');
+    Route::get('/import/create/booksnook', 'Import\BooksnookController@create')->name('import.create.booksnook');
     Route::get('/import/{import}', 'ImportController@show')->name('import.show');
     Route::get('/import/{import}/pricelist', 'ImportController@getPriceList')->name('import.getPriceList');
     Route::delete('/import/{import}/clean', 'ImportController@clean')->name('import.clean');

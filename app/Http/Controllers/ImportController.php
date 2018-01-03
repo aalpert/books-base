@@ -12,7 +12,7 @@ class ImportController extends Controller
 {
     public function index()
     {
-        $imports = Import::all();
+        $imports = Import::orderBy('created_at', 'desc')->get();
         return view('pages.import.list', compact('imports'));
     }
 
@@ -28,11 +28,12 @@ class ImportController extends Controller
         $filename = request('source') . '_' . date('d-m-Y') . '_' . str_random(40) . '.csv';
         $path = $request->file('pricelist')
             ->storeAs('pricelist', $filename);
-
         $import = Import::create([
             'source_id' => request('source'),
-            'filename' => 'storage/app/' . $path,
-            'limit_publishers' => request('publishers'),
+            'params' => [
+                'filename' => 'storage/app/' . $path,
+                'limit_publishers' => !empty(request('publishers', '')) ? explode('||', request('publishers')) : '',
+            ],
             'clear' =>request('clear'),
         ]);
 
@@ -58,7 +59,7 @@ class ImportController extends Controller
      */
     public function getPriceList(Import $import)
     {
-        return response()->download(storage_path() . '/app/pricelist/' . substr($import->filename, strrpos($import->filename, '/') + 1));
+        return response()->download(storage_path() . '/app/pricelist/' . substr($import->params['filename'], strrpos($import->params['filename'], '/') + 1));
     }
 
     /**
