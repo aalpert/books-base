@@ -93,6 +93,7 @@ class BookController extends Controller
 
         $book = Book::findOrFail(request('id'));
         $raw = request(['title', 'isbn', 'price', 'description', 'format', 'year', 'pages', 'source', 'publisher', 'series']);
+        $raw['image'] = $book->image;
         $book->prepare($raw)->update();
 
         $book->attach(request(['author', 'category']));
@@ -113,6 +114,6 @@ class BookController extends Controller
 
     public function show(Book $book)
     {
-        return view('pages.books.show', compact('book', 'priceHistory'));
+        return view('pages.books.show', compact('book'));
     }
 }

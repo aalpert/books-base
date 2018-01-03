@@ -64,19 +64,29 @@
         <!-- END: book-info -->
     </div>
     <div class="tab-pane fade" id="book-price" role="tabpanel">
-        @if(count($book->priceHistory))
+        @if(count($book->history))
             <table class="table table-sm">
                 <thead class="thead-dark">
                 <tr>
                     <th>Дата</th>
-                    <th>Цена</th>
+                    <th>Тип</th>
+                    <th>Значение</th>
                 </tr>
                 </thead>
                 <tbody>
-                @foreach($book->priceHistory->sortByDesc('created_at') as $ph)
+                @foreach($book->history->sortByDesc('created_at') as $ph)
                     <tr>
                         <td>{{$ph->created_at->format('d/m/Y H:i:s')}}</td>
-                        <th scope="row">{{$ph->price}}</th>
+                        <th scope="row">
+                            @if($ph->type == 'source')
+                                Источник
+                            @elseif($ph->type == 'price')
+                                Цена
+                            @elseif($ph->type == 'availability')
+                                Наличие
+                            @endif
+                        </th>
+                        <th scope="row">{{$ph->value}}</th>
                     </tr>
                 @endforeach
                 </tbody>

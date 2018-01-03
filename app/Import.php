@@ -5,7 +5,6 @@ namespace App;
 use Illuminate\Database\Eloquent\Model;
 use Excel;
 use Illuminate\Support\Facades\Log;
-use Storage;
 
 class Import extends Model
 {
@@ -25,6 +24,7 @@ class Import extends Model
         }
         Excel::filter('chunk')->load($import->filename)->chunk(1000, function ($results) use ($import, $limitations) {
             $import = \App\Import::find($import->id);
+            $source_title = Source::find($import->source_id)->pluck('title')->first();
             foreach ($results as $raw) {
                 $import->total++;
                 if (empty(trim($raw['reference'])) ||
@@ -46,11 +46,18 @@ class Import extends Model
                 if ($books->count() > 0) {
                     // Updating existing
                     foreach ($books->all() as $book) {
+                        // updating source
+                        if ($book->source_id != $import->source_id) {
+                            $book->source_id = $import->source_id;
+                            $book->update();
+                        }
+                        // Availability
+                        if (!$book->available()) {
+                            $book->makeAvailable();
+                        }
+                        // updating price
                         if ((number_format((float)$book->price, 2, '.', '')) != $raw['price']) {
                             $book->price = $raw['price'];
-                            $book->priceHistory()->create([
-                                'price' => $book->price
-                            ]);
                             $import->updated++;
                             $import->addLog($book, 'updated');
                             $book->update();
@@ -66,9 +73,6 @@ class Import extends Model
                     $book = new \App\Book;
                     $book->prepare($raw)->save();
                     $book->attach($raw);
-                    $book->priceHistory()->create([
-                        'price' => $book->price
-                    ]);
                     $import->created++;
                     $import->addLog($book, 'created');
                 }
@@ -137,8 +141,8 @@ class Import extends Model
                 foreach ($books->skip($pn * $pp)->take($pp)->get()->all() as $book) {
                     $this->addLog($book, 'deleted');
                     $this->removed++;
-                    $this->update();
-                    $book->delete();
+//                    $book->delete();
+                    $book->makeUnavailable();
                 }
                 $pn++;
                 $total -= $pp;

@@ -81,7 +81,7 @@ class ImportBook
         $img = $SOURCEURL . trim($dom->getElementsByTagName('img')->item(0)->getAttribute('src'));
         @$contents = file_get_contents($img);
         if (!empty($contents)) {
-            $book['image'] = 'book-' . substr($img, strrpos($img, '/') + 1);
+            $book['image'] = strtolower(str_slug($book['publisher'])) . '/' . 'book-' . '-' . str_slug($book['title']) . '-' . str_random(5) . time() . substr($img, strrpos($img, '/') + 1);
             Storage::put('images/covers/' . $book['image'], $contents);
         }
 

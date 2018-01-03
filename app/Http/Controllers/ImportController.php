@@ -18,8 +18,6 @@ class ImportController extends Controller
 
     public function create()
     {
-        Storage::delete('images/covers/book-208743.jpg');
-
         $sources = Source::all();
         return view('pages.import.create', compact('sources'));
 

@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class BookHistory extends Model
 {
-    protected $fillable = ['price'];
+    protected $fillable = ['type', 'value'];
 
     public function book()
     {

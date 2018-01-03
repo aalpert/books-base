@@ -16,7 +16,8 @@ class CreateBookHistoriesTable extends Migration
         Schema::create('book_histories', function (Blueprint $table) {
             $table->increments('id');
             $table->integer('book_id')->unsigned()->index();
-            $table->float('price');
+            $table->enum('type', ['price', 'availability', 'source']);
+            $table->string('value');
             $table->timestamps();
 
             $table->foreign('book_id')->references('id')->on('books')->onDelete('cascade');
