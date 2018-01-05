@@ -230,4 +230,15 @@ class Book extends Model
     {
         return $this->availability !== 'NVN';
     }
+
+
+    /**
+     * Helper function to build path for image
+     * @param $book
+     * @return string
+     */
+    public static function imagePathFromRaw($book)
+    {
+        return substr(strtolower(str_slug($book['publisher'])) . '/book/' . str_slug($book['title']) . '/' . str_slug($book['title']) . '-' . str_random(5) . '-' . time(), 0, 245);
+    }
 }

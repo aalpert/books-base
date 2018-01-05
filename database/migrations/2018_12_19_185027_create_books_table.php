@@ -26,7 +26,7 @@ class CreateBooksTable extends Migration
             $table->string('sku')->index();
             $table->string('image')->nullable();
             $table->float('price');
-            $table->enum('availability', ['A', 'NVN', 'Z', 'AZ'])->nullable();
+            $table->enum('availability', ['A', 'NVN', 'Z', 'AN', 'SB'])->nullable();
             // Book-specific
             $table->string('isbn')->index();
             $table->string('format')->nullable();

@@ -33,8 +33,14 @@
                 <a class="nav-link" href="{{route('publisher.list')}}">Издательства</a>
             </li>
 
-            <li class="nav-item">
-                <a class="nav-link" href="{{route('import.list')}}">Импорт</a>
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" id="navbarImportDropdown" data-toggle="dropdown" href="#">Импорт</a>
+                <div class="dropdown-menu" aria-labelledby="navbarImportDropdown">
+                    <a class="dropdown-item" href="{{route('import.list')}}">История</a>
+                    <div class="dropdown-divider"></div>
+                    <a class="dropdown-item" href="{{route('import.create')}}">Новый Прайс</a>
+                    <a class="dropdown-item" href="{{route('import.create.booksnook')}}">Booksnook</a>
+                </div>
             </li>
         </ul>
 

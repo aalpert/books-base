@@ -17,6 +17,7 @@
                 <label>Драйвер</label>
                 <select name="driver" class="form-control">
                     <option value="galina" selected>Галина</option>
+                    <option value="booksnook">Booksnook</option>
                 </select>
             </div>
 

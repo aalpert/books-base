@@ -2,6 +2,7 @@
 
 namespace App;
 
+use App\Import\Booksnook;
 use App\Import\Galina;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Log;
@@ -29,6 +30,10 @@ class Import extends Model
                    Galina::process($results, $importId);
                 });
                 $this->fresh();
+                $this->status = 'finished';
+                break;
+            case 'booksnook':
+                Booksnook::process($this);
                 $this->status = 'finished';
                 break;
             default:
@@ -114,5 +119,37 @@ class Import extends Model
     public function shouldClean()
     {
         return !empty($this->clear) && $this->clear != 'none';
+    }
+
+
+    /**
+     * update book while import
+     * @param $book
+     * @param $raw
+     * @return mixed
+     */
+    public function updateBook($book, $raw) {
+        // updating source
+        if ($book->source_id != $this->source_id) {
+            $book->source_id = $this->source_id;
+            $book->update();
+        }
+        // Availability
+        if (!$book->availability != $raw['availability']) {
+            $book->availability = $raw['availability'];
+            $book->update();
+        }
+        // updating price
+        if ((number_format((float)$book->price, 2, '.', '')) != (number_format((float)$raw['price'], 2, '.', ''))) {
+            $book->price = $raw['price'];
+            $this->updated++;
+            $this->update();
+            $this->addLog($book, 'updated');
+            $book->update();
+        } else {
+            // Simply update the updated_at field so we can do the clean up later
+            $book->touch();
+        }
+        return $book;
     }
 }
