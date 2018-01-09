@@ -60,8 +60,24 @@
             </div>
 
             <div class="form-group">
+                <label for="bookFormat">Переплет</label>
+                <input type="text" class="form-control" name="bookbinding" id="bookBookbinding">
+            </div>
+
+            <div class="form-group">
                 <label for="bookPrice">Цена</label>
                 <input type="text" class="form-control" name="price" id="bookPrice">
+            </div>
+
+            <div class="form-group">
+                <label>Наличие</label>
+                <select class="form-control" name="availability">
+                    <option value="A">@lang('book.availability_A')</option>
+                    <option value="Z">@lang('book.availability_Z')</option>
+                    <option value="AN">@lang('book.availability_AN')</option>
+                    <option value="SB">@lang('book.availability_SB')</option>
+                    <option value="NVN">@lang('book.availability_NVN')</option>
+                </select>
             </div>
 
             <div class="form-group">

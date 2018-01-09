@@ -3,7 +3,7 @@
         <a class="nav-link active" data-toggle="tab" href="#book-info" role="tab">Информация</a>
     </li>
     <li class="nav-item">
-        <a class="nav-link" id="profile-tab" data-toggle="tab" href="#book-price" role="tab">Динамика цен</a>
+        <a class="nav-link" id="profile-tab" data-toggle="tab" href="#book-price" role="tab">Аудит</a>
     </li>
 </ul>
 
@@ -86,7 +86,13 @@
                                 Наличие
                             @endif
                         </th>
-                        <th scope="row">{{$ph->value}}</th>
+                        <th scope="row">
+                            @if($ph->type == 'availability')
+                                @lang('book.availability_'.$ph->value)
+                            @else
+                                {{$ph->value}}
+                            @endif
+                        </th>
                     </tr>
                 @endforeach
                 </tbody>

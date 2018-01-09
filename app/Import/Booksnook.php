@@ -28,7 +28,7 @@ class Booksnook extends Model
             $total = $res->total;
             $import->total = 0;
 
-            $pn = 83;
+            $pn = 0;
             while ($import->total < $total) {
                 $pn++;
                 Log:info('GETTING PAGE: '.$pn);
@@ -163,6 +163,7 @@ class Booksnook extends Model
             'image' => null,
             'additional_notes' => null,
             'publisher' => null,
+            'bookbinding' => $book->bookbinding,
             'availability' => !empty($book->availability) ? $book->availability : 'A',
         ];
     }

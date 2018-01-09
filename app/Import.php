@@ -27,7 +27,7 @@ class Import extends Model
             case 'galina':
                 $importId = $this->id;
                 Excel::filter('chunk')->load($this->params['filename'])->chunk(10, function ($results) use ($importId) {
-                   Galina::process($results, $importId);
+                    Galina::process($results, $importId);
                 });
                 $this->fresh();
                 $this->status = 'finished';
@@ -128,7 +128,8 @@ class Import extends Model
      * @param $raw
      * @return mixed
      */
-    public function updateBook($book, $raw) {
+    public function updateBook($book, $raw)
+    {
         // updating source
         if ($book->source_id != $this->source_id) {
             $book->source_id = $this->source_id;
@@ -137,6 +138,11 @@ class Import extends Model
         // Availability
         if (!$book->availability != $raw['availability']) {
             $book->availability = $raw['availability'];
+            $book->update();
+        }
+        // Bookbinding
+        if (isset($raw['bookbinding']) && !is_null($raw['bookbinding']) && !empty($raw['bookbinding']) && !$book->bookbinding != $raw['bookbinding']) {
+            $book->bookbinding = $raw['bookbinding'];
             $book->update();
         }
         // updating price

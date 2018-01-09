@@ -64,6 +64,7 @@ class Book extends Model
             'additional_notes' => '',
             'sku' => '',
             'availability' => 'A',
+            'bookbinding' => null,
         ];
         $params = array_merge($def, $params);
 
@@ -79,6 +80,7 @@ class Book extends Model
         $this->image = $params['image'];
         $this->availability = $params['availability'];
         $this->additional_notes = $params['additional_notes'];
+        $this->bookbinding = $params['bookbinding'];
 
         // Making SKU. simply taking first ISBN and removing the characters
         $this->sku = $params['sku'] ? $params['sku'] : static::skuFromIsbn($params['isbn']);
@@ -240,5 +242,25 @@ class Book extends Model
     public static function imagePathFromRaw($book)
     {
         return substr(strtolower(str_slug($book['publisher'])) . '/book/' . str_slug($book['title']) . '/' . str_slug($book['title']) . '-' . str_random(5) . '-' . time(), 0, 245);
+    }
+
+    /**
+     * Scoped filtering. should match naming convention
+     * @param $query
+     * @param $filters
+     * @return mixed
+     */
+    public function scopeFilter($query, $filters)
+    {
+        if (!empty($filters['title'])) {
+            $query->where('title', 'like', '%' . $filters['title'] . '%');
+        }
+        if (!empty($filters['availability'])) {
+            $query->where('availability', $filters['availability']);
+        }
+        if (!empty($filters['isbn'])) {
+            $query->where('isbn', 'like', '%' . $filters['isbn'] . '%');
+        }
+        return $query;
     }
 }

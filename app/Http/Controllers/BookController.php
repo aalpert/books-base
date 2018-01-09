@@ -14,7 +14,7 @@ class BookController extends Controller
      */
     public function index()
     {
-        $books = Book::paginate(50);
+        $books = Book::filter(request(['title', 'isbn', 'availability']))->paginate(50);
         return view('pages.books.list', compact('books'));
     }
 
@@ -41,7 +41,7 @@ class BookController extends Controller
         ]);
 
         $book = new Book;
-        $raw = request(['title', 'isbn', 'price', 'description', 'format', 'year', 'pages', 'source', 'publisher', 'series']);
+        $raw = request(['title', 'isbn', 'price', 'description', 'format', 'year', 'pages', 'source', 'publisher', 'series', 'availability', 'bookbinding']);
         $book->prepare($raw)->save();
 
         $book->attach(request(['author', 'category']));
@@ -92,7 +92,7 @@ class BookController extends Controller
         ]);
 
         $book = Book::findOrFail(request('id'));
-        $raw = request(['title', 'isbn', 'price', 'description', 'format', 'year', 'pages', 'source', 'publisher', 'series']);
+        $raw = request(['title', 'isbn', 'price', 'description', 'format', 'year', 'pages', 'source', 'publisher', 'series', 'availability', 'bookbinding']);
         $raw['image'] = $book->image;
         $book->prepare($raw)->update();
 

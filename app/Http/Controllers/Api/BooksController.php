@@ -17,7 +17,7 @@ class BooksController extends Controller
      */
     public function index(Request $request)
     {
-        $books = Book::with('authors')->with('categories');
+        $books = Book::with('authors')->with('categories')->where('availability', '<>', 'NVN');
         if (!empty(request('publishers', ''))) {
             $publishers = explode('||', request('publishers', ''));
             if (count($publishers)) {

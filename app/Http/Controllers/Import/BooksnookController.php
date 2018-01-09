@@ -21,7 +21,7 @@ class BooksnookController extends Controller
             'source_id' => request('source'),
             'params' => [
                 'host' => request('host'),
-                'token' => request('token'),
+                'token' => request('token', ''),
                 'limit_publishers' => !empty(request('publishers', '')) ? explode('||', request('publishers')) : '',
             ],
             'clear' => request('clear'),

@@ -15,7 +15,7 @@ class PublisherController extends Controller
 
     public function show(Publisher $publisher)
     {
-        $books = $publisher->books()->paginate(50);
+        $books = $publisher->books()->filter(request(['title', 'isbn', 'availability']))->paginate(50);
         return view('pages.publishers.show', compact('publisher', 'books'));
     }
 }

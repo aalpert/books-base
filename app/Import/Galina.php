@@ -26,6 +26,7 @@ class Galina extends Model
                 continue;
             }
             $raw['price'] = number_format((float)$raw['price'], 2, '.', '');
+            $raw['availability'] = 'A';
 
             $sku = \App\Book::skuFromIsbn($raw['isbn']);
 
@@ -33,25 +34,7 @@ class Galina extends Model
             if ($books->count() > 0) {
                 // Updating existing
                 foreach ($books->all() as $book) {
-                    // updating source
-                    if ($book->source_id != $import->source_id) {
-                        $book->source_id = $import->source_id;
-                        $book->update();
-                    }
-                    // Availability
-                    if (!$book->available()) {
-                        $book->makeAvailable();
-                    }
-                    // updating price
-                    if ((number_format((float)$book->price, 2, '.', '')) != $raw['price']) {
-                        $book->price = $raw['price'];
-                        $import->updated++;
-                        $import->addLog($book, 'updated');
-                        $book->update();
-                    } else {
-                        // Simply update the updated_at field so we can do the clean up later
-                        $book->touch();
-                    }
+                    $import->updateBook($book, $raw);
                 }
             } else {
                 // Creating new
@@ -105,8 +88,10 @@ class Galina extends Model
             'series' => null,
             'description' => null,
             'image' => null,
+            'bookbinding' => null,
             'additional_notes' => $raw['new'],
             'publisher' => trim($raw['publisher']),
+            'availability' => 'A',
         ];
 
         // Load the content
@@ -128,7 +113,7 @@ class Galina extends Model
         $html = trim(preg_replace('/\s+/', ' ', $html));
 
         // Get the author
-        $book['author'] = $e = static::exctract($html, 'Автор:');
+        $book['author'] = static::exctract($html, 'Автор:');
 
         // Get the genre
         $book['category'] = static::exctract($html, 'Жанр:');
@@ -136,11 +121,14 @@ class Galina extends Model
         // Get the series
         $book['series'] = static::exctract($html, 'Серия:');
 
+        // Get the bookbinding
+        $book['bookbinding'] = static::extract($html, 'Переплет:');
+
         // Get cover
         $img = $SOURCEURL . trim($dom->getElementsByTagName('img')->item(0)->getAttribute('src'));
         @$contents = file_get_contents($img);
         if (!empty($contents)) {
-            $book['image'] = strtolower(str_slug($book['publisher'])) . '/' . 'book-' . '-' . str_slug($book['title']) . '-' . str_random(5) . time() . substr($img, strrpos($img, '/') + 1);
+            $book['image'] = Book::imagePathFromRaw($book) . substr($img, strrpos($img, '.'));
             Storage::put('images/covers/' . $book['image'], $contents);
         }
 

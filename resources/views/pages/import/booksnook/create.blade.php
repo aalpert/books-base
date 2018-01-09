@@ -12,10 +12,10 @@
                 <input type="text" class="form-control" name="host" required>
             </div>
 
-            <div class="form-group">
-                <label>Token</label>
-                <input type="text" class="form-control" name="token" required>
-            </div>
+            {{--<div class="form-group">--}}
+                {{--<label>Token</label>--}}
+                {{--<input type="text" class="form-control" name="token" required>--}}
+            {{--</div>--}}
 
             <div class="form-group">
                 <label for="bookSource">Источник</label>

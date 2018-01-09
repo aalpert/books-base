@@ -1,4 +1,29 @@
 <div class="card">
+
+    <form method="get">
+        <div class="row">
+            <div class="col-md-3 my-2">
+                <input class="form-control" type="text" placeholder="Название" name="title" value="{{request('title')}}">
+            </div>
+            <div class="col-md-3 my-2">
+                <input class="form-control" type="text" placeholder="ISBN" name="isbn" value="{{request('isbn')}}">
+            </div>
+            <div class="col-md-3 my-2">
+                <select class="form-control" name="availability">
+                    <option value="">-- Наличие --</option>
+                    <option value="A" @if(request('availability') == 'A') selected="selected" @endif>@lang('book.availability_A')</option>
+                    <option value="Z" @if(request('availability') == 'Z') selected="selected" @endif>@lang('book.availability_Z')</option>
+                    <option value="AN" @if(request('availability') == 'AN') selected="selected" @endif>@lang('book.availability_AN')</option>
+                    <option value="SB" @if(request('availability') == 'SB') selected="selected" @endif>@lang('book.availability_SB')</option>
+                    <option value="NVN" @if(request('availability') == 'NVN') selected="selected" @endif>@lang('book.availability_NVN')</option>
+                </select>
+            </div>
+            <div class="col-md-1 my-2">
+                <input type="submit" class="btn btn-primary" value="Фильтровать">
+            </div>
+        </div>
+    </form>
+
     @if(count($books))
         <table class="table table-hover table-responsive">
             <thead>
@@ -54,7 +79,11 @@
             </tbody>
         </table>
         <div class="row justify-content-center">
-            {{$books->links()}}
+            {{$books->appends([
+            'title'=>request('title'),
+            'isbn'=>request('isbn'),
+            'availability'=>request('availability'),
+            ])->links()}}
         </div>
     @else
         <div class="text-center">

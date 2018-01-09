@@ -6,6 +6,10 @@
         {{$publisher->title}}
     </h2>
 
+    <p>
+        {{$publisher->description}}
+    </p>
+
     @include('widgets.books-list')
 
 @endsection

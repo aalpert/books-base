@@ -15,7 +15,7 @@ class AuthorController extends Controller
 
     public function show(Author $author)
     {
-        $books = $author->books()->paginate(50);
+        $books = $author->books()->filter(request(['title', 'isbn', 'availability']))->paginate(50);
         return view('pages.authors.show', compact('author', 'books'));
     }
 }

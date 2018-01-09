@@ -70,8 +70,24 @@
             </div>
 
             <div class="form-group">
+                <label for="bookFormat">Переплет</label>
+                <input type="text" class="form-control" name="bookbinding" value="{{$book->bookbinding}}" id="bookBookbinding">
+            </div>
+
+            <div class="form-group">
                 <label for="bookPrice">Цена</label>
                 <input type="text" class="form-control" name="price" value="{{$book->price}}" id="bookPrice">
+            </div>
+
+            <div class="form-group">
+                <label>Наличие</label>
+                <select class="form-control" name="availability">
+                    <option value="A" @if($book->availability == 'A') selected="selected" @endif>@lang('book.availability_A')</option>
+                    <option value="Z" @if($book->availability == 'Z') selected="selected" @endif>@lang('book.availability_Z')</option>
+                    <option value="AN" @if($book->availability == 'AN') selected="selected" @endif>@lang('book.availability_AN')</option>
+                    <option value="SB" @if($book->availability == 'SB') selected="selected" @endif>@lang('book.availability_SB')</option>
+                    <option value="NVN" @if($book->availability == 'NVN') selected="selected" @endif>@lang('book.availability_NVN')</option>
+                </select>
             </div>
 
             <div class="form-group">
