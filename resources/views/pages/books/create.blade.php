@@ -64,10 +64,17 @@
                 <input type="text" class="form-control" name="bookbinding" id="bookBookbinding">
             </div>
 
-            <div class="form-group">
-                <label for="bookPrice">Цена</label>
-                <input type="text" class="form-control" name="price" id="bookPrice">
-            </div>
+            <fieldset class="card form-group p-2">
+                <legend><small>Цены</small></legend>
+                @foreach($sources->all() as $source)
+                    <div class="form-group row">
+                        <label class="col-sm-2 col-form-label">{{$source->title}}</label>
+                        <div class="col-sm-2">
+                            <input type="text" class="form-control" name="price[{{$source->id}}]" value="">
+                        </div>
+                    </div>
+                @endforeach
+            </fieldset>
 
             <div class="form-group">
                 <label>Наличие</label>
@@ -77,15 +84,6 @@
                     <option value="AN">@lang('book.availability_AN')</option>
                     <option value="SB">@lang('book.availability_SB')</option>
                     <option value="NVN">@lang('book.availability_NVN')</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label for="bookSource">Источник</label>
-                <select class="form-control" name="source" id="bookSource">
-                    @foreach($sources->all() as $source)
-                        <option value="{{$source->id}}">{{$source->title}}</option>
-                    @endforeach
                 </select>
             </div>
 
@@ -102,7 +100,7 @@
         $('#bookAuthor').selectize({
             delimiter: ',',
             persist: false,
-            create: function(input) {
+            create: function (input) {
                 return {
                     value: input,
                     text: input

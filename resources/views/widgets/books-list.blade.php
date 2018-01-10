@@ -53,7 +53,8 @@
                         {{ $book->series['title'] }}
                     </td>
                     <td>
-                        {{ $book->publisher['title'] }}
+                        {{ implode(', ', $book->publishers()->pluck('title')->all()) }}
+{{--                        {{ $book->publisher['title'] }}--}}
                     </td>
                     <!-- Action Items -->
                     <td nowrap="">
@@ -121,7 +122,7 @@
             var modal = $(this);
             modal.find('.modal-title').text(bookLink.data('title'));
             modal.find('.modal-body').html('<i class="fas fa-spinner fa-spin"></i>');
-            axios.get('/book/'+bookLink.data('book-id')+'/show').then(function(response) {
+            axios.get('/book/'+bookLink.data('book-id')).then(function(response) {
                 modal.find('.modal-body').html(response.data);
             });
         })

@@ -21,6 +21,7 @@ Route::middleware(['auth'])->group(function () {
     Route::patch('/source', 'SourceController@update')->name('source.update');;
     Route::get('/source/create', 'SourceController@create')->name('source.create');
     Route::get('/source/{source}/edit', 'SourceController@edit')->name('source.edit');
+    Route::get('/source/{source}', 'SourceController@show')->name('source.show');
 
     Route::get('/books', 'BookController@index')->name('book.list');
     Route::post('/book', 'BookController@store')->name('book.store');
@@ -29,7 +30,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/book/create', 'BookController@create')->name('book.create');
     Route::get('/book/{book}/edit', 'BookController@edit')->name('book.edit');
     Route::get('/book/{book}/gallery', 'BookController@gallery')->name('book.gallery');
-    Route::get('/book/{book}/show', 'BookController@show')->name('book.show');
+    Route::get('/book/{book}', 'BookController@show')->name('book.show');
 
     Route::get('/import', 'ImportController@index')->name('import.list');
     Route::post('/import', 'ImportController@store')->name('import.store');

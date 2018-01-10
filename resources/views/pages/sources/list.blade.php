@@ -1,7 +1,7 @@
 @extends('admin')
 
 @section('content')
-    <h2>Источники данных <a href="{{route('source.create')}}" class="ml-2"> <i class="far fa-plus-square"></i></a></h2>
+    <h2>Источники цен <a href="{{route('source.create')}}" class="ml-2"> <i class="far fa-plus-square"></i></a></h2>
     <div class="card">
         @if(count($sources))
             <table class="table table-hover table-responsive">
@@ -19,9 +19,9 @@
                 @foreach($sources->all() as $source)
                     <tr>
                         <th scope="row">{{$source->id}}</th>
-                        <td>{{$source->title}}</td>
+                        <td><a href="{{route('source.show', $source)}}">{{$source->title}}</a></td>
                         <td>{{$source->driver}}</td>
-                        <td>{{$source->books->count()}}</td>
+                        <td>{{$source->bookPrices->count()}}</td>
                         <td>{{$source->updated_at->diffForHumans()}}</td>
                         <td nowrap="">
 

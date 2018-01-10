@@ -17,6 +17,22 @@ class Import extends Model
         'params' => 'array',
     ];
 
+
+    public function source()
+    {
+        return $this->belongsTo(Source::class);
+    }
+
+    public function logs()
+    {
+        return $this->hasMany(ImportLog::class);
+    }
+
+    //
+
+    /**
+     * Start processing
+     */
     public function start()
     {
         set_time_limit(0);
@@ -44,25 +60,10 @@ class Import extends Model
         $this->update();
     }
 
-    public function source()
-    {
-        return $this->belongsTo(Source::class);
-    }
-
-    public function logs()
-    {
-        return $this->hasMany(ImportLog::class);
-    }
-
-    public function addLog($book, $status)
+    public function addLog($item, $status)
     {
         $this->logs()->create([
-            'title' => mb_convert_encoding(substr($book->title, 0, 255), 'UTF-8', 'UTF-8'),
-            'isbn' => $book->isbn,
-            'price' => $book->price,
-            'publisher' => $book->publisher['title'],
-            'author' => mb_convert_encoding(substr(implode(', ', $book->authors()->pluck('name')->all()), 0, 255), 'UTF-8', 'UTF-8'),
-            'sku' => $book->sku,
+            'details' => $item->toJson(),
             'status' => $status,
         ]);
     }
@@ -77,7 +78,7 @@ class Import extends Model
             Log::info('Cleanup is not needed');
             return $this;
         }
-        $books = \App\Book::where('updated_at', '<', $this->created_at)->where('source_id', '=', $this->source_id);
+        $books = \App\Book::withSource($this->source_id)->where('books.updated_at', '<', $this->created_at);
 
         // Limit to the publishers that were processed in this run
         if (!empty($this->limit_publishers && $this->clear == 'publishers')) {
@@ -102,6 +103,7 @@ class Import extends Model
                     $this->addLog($book, 'deleted');
                     $this->removed++;
 //                    $book->delete();
+                    $book->prices()->where('source_id', $this->source_id)->delete();
                     $book->makeUnavailable();
                 }
                 $pn++;
@@ -130,32 +132,26 @@ class Import extends Model
      */
     public function updateBook($book, $raw)
     {
-        // updating source
-        if ($book->source_id != $this->source_id) {
-            $book->source_id = $this->source_id;
-            $book->update();
-        }
-        // Availability
-        if (!$book->availability != $raw['availability']) {
-            $book->availability = $raw['availability'];
-            $book->update();
-        }
-        // Bookbinding
-        if (isset($raw['bookbinding']) && !is_null($raw['bookbinding']) && !empty($raw['bookbinding']) && !$book->bookbinding != $raw['bookbinding']) {
-            $book->bookbinding = $raw['bookbinding'];
-            $book->update();
-        }
-        // updating price
-        if ((number_format((float)$book->price, 2, '.', '')) != (number_format((float)$raw['price'], 2, '.', ''))) {
-            $book->price = $raw['price'];
-            $this->updated++;
-            $this->update();
-            $this->addLog($book, 'updated');
-            $book->update();
+        $book->touch();
+        // processing price
+        $bp = $book->prices()->where('source_id', $this->source_id)->first();
+        $raw['price'] = BookPrice::format($raw['price']);
+        // For the logs
+        $book->price = $raw['price'];
+        if (!is_null($bp)) {
+            // The book has this source, updating
+            if ($bp->price != $raw['price']) {
+                $book->updatePrices([$this->source_id => $raw['price']]);
+                $this->updated++;
+                $this->addLog($book, 'updated');
+            }
         } else {
-            // Simply update the updated_at field so we can do the clean up later
-            $book->touch();
+            // Creating new price entry
+            $book->updatePrices([$this->source_id => $raw['price']]);
+            $this->created++;
+            $this->addLog($book, 'appeared');
         }
+
         return $book;
     }
 }

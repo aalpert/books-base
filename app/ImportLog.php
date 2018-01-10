@@ -7,13 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class ImportLog extends Model
 {
     protected $fillable = [
-        'isbn',
-        'title',
-        'author',
-        'sku',
-        'price',
-        'import_id',
-        'publisher',
+        'details',
         'status',
     ];
 

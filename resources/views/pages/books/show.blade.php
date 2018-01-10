@@ -3,7 +3,7 @@
         <a class="nav-link active" data-toggle="tab" href="#book-info" role="tab">Информация</a>
     </li>
     <li class="nav-item">
-        <a class="nav-link" id="profile-tab" data-toggle="tab" href="#book-price" role="tab">Аудит</a>
+        <a class="nav-link" id="profile-tab" data-toggle="tab" href="#book-price" role="tab">Цены</a>
     </li>
 </ul>
 
@@ -32,14 +32,11 @@
 
                 <dl>
                     <dt class="col-sm-2">Издательство:</dt>
-                    <dd class="col-sm-10">{{$book->publisher['title']}}</dd>
+                    <dd class="col-sm-10">{{implode(', ', $book->publishers()->pluck('title')->all())}}</dd>
                 </dl>
             </div>
             <div class="col-md-4">
                 <dl>
-                    <dt class="col-sm-2">Цена:</dt>
-                    <dd class="col-sm-10">{{$book->price}}</dd>
-
                     <dt class="col-sm-2">Формат:</dt>
                     <dd class="col-sm-10">{{$book->format}}</dd>
 
@@ -64,39 +61,31 @@
         <!-- END: book-info -->
     </div>
     <div class="tab-pane fade" id="book-price" role="tabpanel">
-        @if(count($book->history))
+        @if(count($book->prices))
             <table class="table table-sm">
                 <thead class="thead-dark">
                 <tr>
                     <th>Дата</th>
-                    <th>Тип</th>
-                    <th>Значение</th>
+                    <th>Источник</th>
+                    <th>Цена</th>
                 </tr>
                 </thead>
                 <tbody>
-                @foreach($book->history->sortByDesc('created_at') as $ph)
+                @foreach($book->prices->sortByDesc('created_at') as $bp)
                     <tr>
-                        <td>{{$ph->created_at->format('d/m/Y H:i:s')}}</td>
+                        <td>{{$bp->created_at->format('d/m/Y H:i:s')}}</td>
                         <th scope="row">
-                            @if($ph->type == 'source')
-                                Источник
-                            @elseif($ph->type == 'price')
-                                Цена
-                            @elseif($ph->type == 'availability')
-                                Наличие
-                            @endif
+                            {{$bp->source['title']}}
                         </th>
                         <th scope="row">
-                            @if($ph->type == 'availability')
-                                @lang('book.availability_'.$ph->value)
-                            @else
-                                {{$ph->value}}
-                            @endif
+                            {{$bp->price}}
                         </th>
                     </tr>
                 @endforeach
                 </tbody>
             </table>
+        @else
+            Книги нет в наличии
         @endif
     </div>
 </div>

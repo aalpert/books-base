@@ -2,6 +2,9 @@
 
 namespace App\Import;
 
+use App\Book;
+use App\BookPrice;
+use App\Import;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
 
@@ -9,7 +12,7 @@ class Galina extends Model
 {
     public static function process($results, $importId)
     {
-        $import = \App\Import::find($importId);
+        $import = Import::find($importId);
         $limitations = $import->params['limit_publishers'];
 //        dd($limitations);
         foreach ($results as $raw) {
@@ -25,12 +28,9 @@ class Galina extends Model
                 $import->update();
                 continue;
             }
-            $raw['price'] = number_format((float)$raw['price'], 2, '.', '');
-            $raw['availability'] = 'A';
+            $sku = Book::skuFromIsbn($raw['isbn']);
 
-            $sku = \App\Book::skuFromIsbn($raw['isbn']);
-
-            $books = \App\Book::where('sku', '=', $sku)->get();
+            $books = Book::where('sku', $sku)->get();
             if ($books->count() > 0) {
                 // Updating existing
                 foreach ($books->all() as $book) {
@@ -39,9 +39,9 @@ class Galina extends Model
             } else {
                 // Creating new
                 $raw = Galina::prepare($raw);
-                $raw['source'] = $import->source_id;
-                $book = new \App\Book;
+                $book = new Book;
                 $book->prepare($raw)->save();
+                $book->updatePrices([$import->source_id => $raw['price']]);
                 $book->attach($raw);
                 $import->created++;
                 $import->addLog($book, 'created');
@@ -83,7 +83,7 @@ class Galina extends Model
             'pages' => (int)$raw['pages'],
             'year' => (int)$raw['year'],
             'format' => trim($raw['format']),
-            'price' => $raw['price'],
+            'price' => BookPrice::format($raw['price']),
             'category' => null,
             'series' => null,
             'description' => null,
@@ -122,14 +122,14 @@ class Galina extends Model
         $book['series'] = static::exctract($html, 'Серия:');
 
         // Get the bookbinding
-        $book['bookbinding'] = static::extract($html, 'Переплет:');
+        $book['bookbinding'] = static::exctract($html, 'Переплет:');
 
         // Get cover
         $img = $SOURCEURL . trim($dom->getElementsByTagName('img')->item(0)->getAttribute('src'));
         @$contents = file_get_contents($img);
         if (!empty($contents)) {
             $book['image'] = Book::imagePathFromRaw($book) . substr($img, strrpos($img, '.'));
-            Storage::put('images/covers/' . $book['image'], $contents);
+            Storage::put('images/books/' . $book['image'], $contents);
         }
 
         return $book;

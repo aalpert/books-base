@@ -47,27 +47,26 @@ class Booksnook extends Model
                         $import->total++;
                         $import->update();
 
-                        Log::info($import->total .' out of '. $total);
-
-                        if (!count($importable->publisher) || empty($importable->isbn)) {
+                        if (empty($importable->isbn)) {
                             $import->skipped++;
                             $import->update;
                             continue;
                         }
 
                         $sku = Book::skuFromIsbn($importable->isbn);
-                        $books = Book::where('sku', '=', $sku)->get();
+                        $books = Book::where('sku', $sku)->get();
 
-                        // TODO: make DRY!!!
                         if ($books->count() > 0) {
+                            // booksnook doesn't provide prices info
+                            continue;
+
                             // Updating existing
-                            foreach ($books->all() as $book) {
-                                $import->updateBook($book, static::raw($importable));
-                            }
+//                            foreach ($books->all() as $book) {
+//                                $import->updateBook($book, static::raw($importable));
+//                            }
                         } else {
                             // Creating new
                             $raw = Booksnook::prepare($importable, $import->params['host']);
-                            $raw['source'] = $import->source_id;
                             $book = new Book;
                             $book->prepare($raw)->save();
                             $book->attach($raw);
@@ -108,13 +107,16 @@ class Booksnook extends Model
         }
 
         // publisher
-        if (!$t = Publisher::where('title', $book->publisher[0]->title)->first()) {
-            $t = Publisher::create([
-                'title' => $book->publisher[0]->title,
-                'description' => $book->publisher[0]->description,
-            ]);
+        $res['publisher'] = [];
+        foreach($book->publisher as $publisher) {
+            if (!$t = Publisher::where('title', $publisher->title)->first()) {
+                $t = Publisher::create([
+                    'title' => $publisher->title,
+                    'description' => $publisher->description,
+                ]);
+            }
+            $res['publisher'][] = $t->title;
         }
-        $res['publisher'] = $t->title;
 
         // series
         if (count($book->series)) {

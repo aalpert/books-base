@@ -3,10 +3,26 @@
 namespace App;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class Book extends Model
 {
+
+    protected $fillable = array(
+        'series_id',
+        'title',
+        'description',
+        'sku',
+        'image',
+        'availability',
+        'isbn',
+        'format',
+        'bookbinding',
+        'year',
+        'pages',
+        'additional_notes',
+    );
 
     /**
      * Establish one-two-many relationships with Source
@@ -27,9 +43,9 @@ class Book extends Model
         return $this->belongsToMany(Category::class);
     }
 
-    public function publisher()
+    public function publishers()
     {
-        return $this->belongsTo(Publisher::class);
+        return $this->belongsToMany(Publisher::class);
     }
 
     public function series()
@@ -37,9 +53,9 @@ class Book extends Model
         return $this->belongsTo(Series::class);
     }
 
-    public function history()
+    public function prices()
     {
-        return $this->hasMany(BookHistory::class);
+        return $this->hasMany(BookPrice::class);
     }
 
     /**
@@ -54,12 +70,10 @@ class Book extends Model
         $def = [
             'title' => '',
             'isbn' => '',
-            'price' => 0,
             'description' => '',
             'format' => '',
             'year' => 0,
             'pages' => 0,
-            'source_id' => 0,
             'image' => '',
             'additional_notes' => '',
             'sku' => '',
@@ -71,12 +85,10 @@ class Book extends Model
         // Getting raw fields
         $this->title = substr(trim($params['title']), 0, 255);
         $this->isbn = trim($params['isbn']);
-        $this->price = (number_format((float)$params['price'], 2, '.', ''));
         $this->description = $params['description'];
         $this->format = $params['format'];
         $this->year = $params['year'];
         $this->pages = $params['pages'];
-        $this->source_id = $params['source'];
         $this->image = $params['image'];
         $this->availability = $params['availability'];
         $this->additional_notes = $params['additional_notes'];
@@ -86,14 +98,13 @@ class Book extends Model
         $this->sku = $params['sku'] ? $params['sku'] : static::skuFromIsbn($params['isbn']);
 
         // processing Publisher
-        $publisher = Publisher::firstOrCreate(['title' => $params['publisher']]);
-        $this->publisher_id = $publisher->id;
+//        $publisher = Publisher::firstOrCreate(['title' => $params['publisher']]);
+//        $this->publisher_id = $publisher->id;
 
         // processing Series
         if (!empty($params['series'])) {
             $series = Series::firstOrCreate([
-                'title' => $params['series'],
-                'publisher_id' => $publisher->id,
+                'title' => $params['series']
             ]);
             $this->series_id = $series->id;
         }
@@ -131,6 +142,19 @@ class Book extends Model
                 $this->categories()->attach($category);
             }
         }
+
+        // Processing Publisher
+        if (!empty($this->id)) {
+            $this->publishers()->detach();
+        }
+        if (!empty($params['publisher'])) {
+            $chunks = explode('||', $params['publisher']);
+            foreach ($chunks as $chunk) {
+                $publisher = Publisher::firstOrCreate(['title' => trim($chunk)]);
+                $this->publishers()->attach($publisher);
+            }
+        }
+
         return $this;
     }
 
@@ -142,36 +166,38 @@ class Book extends Model
      */
     public static function skuFromIsbn(string $isbn)
     {
-        $isbn = explode(',', $isbn)[0];
+        $isbn = explode(',', $isbn);
+        // if there are many isbns, take last one
+        $isbn = $isbn[count($isbn) - 1];
         $sku = preg_replace('/[^0-9]/', '', $isbn);
         return $sku;
     }
 
 
-    private function audit($originals)
-    {
-//        dd($originals, $this->source_id);
-        if ((float)$originals['price'] != (float)$this->price) {
-            $this->history()->create([
-                'type' => 'price',
-                'value' => $this->price,
-            ]);
-        }
-
-        if ($originals['availability'] != $this->availability) {
-            $this->history()->create([
-                'type' => 'availability',
-                'value' => $this->availability,
-            ]);
-        }
-        if ($originals['source_id'] != $this->source_id) {
-            $this->history()->create([
-                'type' => 'source',
-                'value' => Source::where('id', $this->source_id)->pluck('title')->first(),
-            ]);
-        }
-        return $this;
-    }
+//    private function audit($originals)
+//    {
+////        dd($originals, $this->source_id);
+//        if ((float)$originals['price'] != (float)$this->price) {
+//            $this->history()->create([
+//                'type' => 'price',
+//                'value' => $this->price,
+//            ]);
+//        }
+//
+//        if ($originals['availability'] != $this->availability) {
+//            $this->history()->create([
+//                'type' => 'availability',
+//                'value' => $this->availability,
+//            ]);
+//        }
+//        if ($originals['source_id'] != $this->source_id) {
+//            $this->history()->create([
+//                'type' => 'source',
+//                'value' => Source::where('id', $this->source_id)->pluck('title')->first(),
+//            ]);
+//        }
+//        return $this;
+//    }
 
     public function delete()
     {
@@ -181,17 +207,12 @@ class Book extends Model
         return parent::delete();
     }
 
-    public function save(array $options = [])
-    {
-        $originals = [
-            'price' => $this->getOriginal('price'),
-            'availability' => $this->getOriginal('availability'),
-            'source_id' => $this->getOriginal('source_id'),
-        ];
-        parent::save($options);
-        $this->audit($originals);
-        return $this;
-    }
+//    public function save(array $options = [])
+//    {
+//        // Let's control availability once the book is updated
+//        parent::save($options);
+//        return $this;
+//    }
 
     /**
      * Mark book as unavailable
@@ -219,8 +240,9 @@ class Book extends Model
      */
     public function setAvailability($state)
     {
-        $this->availability = $state;
-        $this->update();
+//        $this->availability = $state;
+        $this->update(['availability' => $state]);
+        Log::info('Setting availability '. $state);
         return $this;
     }
 
@@ -231,6 +253,25 @@ class Book extends Model
     public function available()
     {
         return $this->availability !== 'NVN';
+    }
+
+    public function checkAvailability()
+    {
+        $this->fresh(['prices']);
+        switch ($this->availability) {
+            case 'A':
+                // So the book is available. Let's check that it has prices. If not, make it unavailable
+                if ($this->prices()->count() < 1) {
+                    $this->makeUnavailable();
+                }
+                break;
+            default:
+                // In any other case let's make it available if there are prices
+                if ($this->prices()->count() > 0 && $this->availability != 'A') {
+                    $this->makeAvailable();
+                }
+                break;
+        }
     }
 
 
@@ -263,4 +304,43 @@ class Book extends Model
         }
         return $query;
     }
+
+    /**
+     * Add or remove prices. Very straight forward
+     * @param array $prices
+     * @return $this
+     */
+    public function updatePrices(array $prices)
+    {
+        foreach ($prices as $source => $price) {
+            $price = BookPrice::format($price);
+            if ($bp = $this->prices()->where('source_id', $source)->first()) {
+                if (!empty($price) && $price > 0) {
+                    $bp->update(['price' => $price]);
+                } else {
+                    $bp->delete();
+                }
+            } elseif (!empty($price) && $price > 0) {
+                $this->prices()->create([
+                    'source_id' => $source,
+                    'price' => $price,
+                ]);
+            }
+        }
+        $this->checkAvailability();
+        return $this;
+    }
+
+    /**
+     * Find all books that have price with the source
+     * @param $query
+     * @param $source_id
+     * @return mixed
+     */
+    public static function scopeWithSource($query, $source_id)
+    {
+        $query->join('book_prices', 'books.id', '=', 'book_prices.book_id')->where('book_prices.source_id', $source_id);
+        return $query;
+    }
+
 }
