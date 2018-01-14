@@ -64,6 +64,7 @@ class Import extends Model
     {
         $this->logs()->create([
             'details' => $item->toJson(),
+            'import_id' => $this->id,
             'status' => $status,
         ]);
     }
@@ -136,8 +137,6 @@ class Import extends Model
         // processing price
         $bp = $book->prices()->where('source_id', $this->source_id)->first();
         $raw['price'] = BookPrice::format($raw['price']);
-        // For the logs
-        $book->price = $raw['price'];
         if (!is_null($bp)) {
             // The book has this source, updating
             if ($bp->price != $raw['price']) {
@@ -148,7 +147,7 @@ class Import extends Model
         } else {
             // Creating new price entry
             $book->updatePrices([$this->source_id => $raw['price']]);
-            $this->created++;
+            $this->appeared++;
             $this->addLog($book, 'appeared');
         }
 
