@@ -60,11 +60,15 @@ class Import extends Model
         $this->update();
     }
 
-    public function addLog($item, $status)
+    public function addLog($item, $status, $price = 0)
     {
         $this->logs()->create([
-            'details' => $item->toJson(),
-            'import_id' => $this->id,
+            'details' => [
+                'id' => $item->id,
+                'isbn' => $item->isbn,
+                'title' => $item->title,
+                'price' => $price,
+            ],
             'status' => $status,
         ]);
     }
@@ -142,15 +146,15 @@ class Import extends Model
             if ($bp->price != $raw['price']) {
                 $book->updatePrices([$this->source_id => $raw['price']]);
                 $this->updated++;
-                $this->addLog($book, 'updated');
+                $this->addLog($book, 'updated', $raw['price']);
             }
         } else {
             // Creating new price entry
             $book->updatePrices([$this->source_id => $raw['price']]);
             $this->appeared++;
-            $this->addLog($book, 'appeared');
+            $this->addLog($book, 'appeared', $raw['price']);
         }
-
+        $this->update();
         return $book;
     }
 }

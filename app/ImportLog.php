@@ -11,6 +11,10 @@ class ImportLog extends Model
         'status',
     ];
 
+    protected $casts = [
+        'details' => 'array',
+    ];
+
     public function import()
     {
         return $this->belongsTo(Import::class);

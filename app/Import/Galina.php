@@ -45,8 +45,8 @@ class Galina extends Model
                 $book->attach($raw);
                 $import->created++;
                 $import->addLog($book, 'created');
+                $import->update();
             }
-            $import->update();
         }
     }
 
