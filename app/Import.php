@@ -5,6 +5,7 @@ namespace App;
 use App\Import\Booksnook;
 use App\Import\Galina;
 use App\Import\Ksd;
+use App\Import\Mahkha;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Facades\Excel;
@@ -49,6 +50,7 @@ class Import extends Model
                 $this->fresh();
                 $this->status = 'finished';
                 break;
+
             case 'ksd':
                 $importId = $this->id;
                 Excel::filter('chunk')->load($this->params['filename'])->chunk(10, function ($results) use ($importId) {
@@ -57,10 +59,21 @@ class Import extends Model
                 $this->fresh();
                 $this->status = 'finished';
                 break;
+
+            case 'mahkha':
+                $importId = $this->id;
+                Excel::filter('chunk')->load($this->params['filename'])->chunk(10, function ($results) use ($importId) {
+                    Mahkha::process($results, $importId);
+                });
+                $this->fresh();
+                $this->status = 'finished';
+                break;
+
             case 'booksnook':
                 Booksnook::process($this);
                 $this->status = 'finished';
                 break;
+
             default:
                 $this->status = 'failed';
         }
@@ -74,7 +87,7 @@ class Import extends Model
         $this->logs()->create([
             'details' => [
                 'id' => $item->id,
-                'isbn' => $item->isbn,
+                'isbn' => $item->details['isbn'],
                 'title' => $item->title,
                 'price' => $price,
             ],

@@ -41,17 +41,21 @@
             </div>
             <div class="col-md-4">
                 <dl>
-                    <dt class="col-sm-2">Формат:</dt>
-                    <dd class="col-sm-10">{{$book->details['format']}}</dd>
+                    @foreach($book->details as $detail => $value)
+                        <dt class="col-sm-2">{{$detail}}:</dt>
+                        <dd class="col-sm-10">{{$value}}</dd>
+                    @endforeach
+                    {{--<dt class="col-sm-2">Формат:</dt>--}}
+                    {{--<dd class="col-sm-10">{{$book->details['format']}}</dd>--}}
 
-                    <dt class="col-sm-2">Год:</dt>
-                    <dd class="col-sm-10">{{$book->year}}</dd>
+                    {{--<dt class="col-sm-2">Год:</dt>--}}
+                    {{--<dd class="col-sm-10">{{$book->year}}</dd>--}}
 
-                    <dt class="col-sm-2">Страниц:</dt>
-                    <dd class="col-sm-10">{{$book->details['pages']}}</dd>
+                    {{--<dt class="col-sm-2">Страниц:</dt>--}}
+                    {{--<dd class="col-sm-10">{{$book->details['pages']}}</dd>--}}
 
-                    <dt class="col-sm-2">Добавлена:</dt>
-                    <dd class="col-sm-10">{{$book->created_at->diffForHumans()}}</dd>
+                    {{--<dt class="col-sm-2">Добавлена:</dt>--}}
+                    {{--<dd class="col-sm-10">{{$book->created_at->diffForHumans()}}</dd>--}}
                 </dl>
             </div>
         </div>
