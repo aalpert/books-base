@@ -25,5 +25,10 @@ class SourceTableSeeder extends Seeder
         $source->title = 'КСД';
         $source->driver = 'ksd';
         $source->save();
+
+        $source  = new \App\Source();
+        $source->title = 'Booksnook';
+        $source->driver = 'booksnook';
+        $source->save();
     }
 }

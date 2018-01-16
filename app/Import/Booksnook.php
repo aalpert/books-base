@@ -4,6 +4,7 @@ namespace App\Import;
 
 use App\Author;
 use App\Book;
+use App\BookPrice;
 use App\Category;
 use App\Publisher;
 use App\Series;
@@ -31,7 +32,8 @@ class Booksnook extends Model
             $pn = 0;
             while ($import->total < $total) {
                 $pn++;
-                Log:info('GETTING PAGE: '.$pn);
+                Log:
+                info('GETTING PAGE: ' . $pn);
                 $response = $client->get($import->params['host'] . 'api/export', ['query' => [
                     'pp' => 100,
                     'pn' => $pn,
@@ -58,6 +60,8 @@ class Booksnook extends Model
 
                         if ($books->count() > 0) {
                             // booksnook doesn't provide prices info
+                            $import->skipped++;
+                            $import->update;
                             continue;
 
                             // Updating existing
@@ -108,7 +112,7 @@ class Booksnook extends Model
 
         // publisher
         $res['publisher'] = [];
-        foreach($book->publisher as $publisher) {
+        foreach ($book->publisher as $publisher) {
             if (!$t = Publisher::where('title', $publisher->title)->first()) {
                 $t = Publisher::create([
                     'title' => $publisher->title,
@@ -117,6 +121,7 @@ class Booksnook extends Model
             }
             $res['publisher'][] = $t->title;
         }
+        $res['publisher'] = implode('||', $res['publisher']);
 
         // series
         if (count($book->series)) {
@@ -125,7 +130,7 @@ class Booksnook extends Model
 
         // image
         if ($book->image) {
-            $host='http://booksnook.com.ua/';
+            $host = 'http://booksnook.com.ua/';
             $img = $host . trim($book->image);
 //            dd($img);
             @$contents = file_get_contents($img);
@@ -154,19 +159,23 @@ class Booksnook extends Model
         return [
             'title' => $book->title,
             'description' => nl2br(trim($book->description)),
-            'pages' => $book->pages,
-            'year' => $book->year,
-            'format' => $book->format,
             'author' => '',
-            'isbn' => trim($book->isbn),
-            'price' => (float)$book->price,
             'category' => '',
             'series' => null,
             'image' => null,
-            'additional_notes' => null,
             'publisher' => null,
-            'bookbinding' => $book->bookbinding,
+            'year' => $book->year,
             'availability' => !empty($book->availability) ? $book->availability : 'A',
+
+            'price' => BookPrice::format($book->price),
+
+            'details' => [
+                'pages' => $book->pages,
+                'format' => $book->format,
+                'isbn' => trim($book->isbn),
+                'bookbinding' => $book->bookbinding,
+                'additional_notes' => null,
+            ]
         ];
     }
 }
