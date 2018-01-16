@@ -16,23 +16,23 @@ class CreateBooksTable extends Migration
         Schema::enableForeignKeyConstraints();
         Schema::create('books', function (Blueprint $table) {
             $table->increments('id')->unique();
-            // relations
-//            $table->integer('source_id')->unsigned()->index();
-//            $table->integer('publisher_id')->unsigned()->index();
             $table->integer('series_id')->nullable()->unsigned()->index();
             //fields
             $table->string('title')->index();
             $table->text('description')->nullable();
             $table->string('sku')->index();
+            $table->smallInteger('year')->nullable();
             $table->string('image')->nullable();
             $table->enum('availability', ['A', 'NVN', 'Z', 'AN', 'SB'])->nullable();
+
             // Book-specific
-            $table->string('isbn')->index();
-            $table->string('format')->nullable();
-            $table->string('bookbinding')->nullable();
-            $table->smallInteger('year')->nullable();
-            $table->smallInteger('pages')->nullable();
-            $table->string('additional_notes')->nullable();
+            $table->json('details')->nullable();
+//            $table->string('isbn')->index();
+//            $table->string('format')->nullable();
+//            $table->string('bookbinding')->nullable();
+//            $table->smallInteger('year')->nullable();
+//            $table->smallInteger('pages')->nullable();
+//            $table->string('additional_notes')->nullable();
 
             $table->timestamps();
 

@@ -131,7 +131,7 @@ class Booksnook extends Model
             @$contents = file_get_contents($img);
             if (!empty($contents)) {
                 $res['image'] = Book::imagePathFromRaw($res) . substr($img, strrpos($img, '.'));
-                Storage::put('images/books/' . $res['image'], $contents);
+                Storage::put('images/items/' . $res['image'], $contents);
             }
         }
 

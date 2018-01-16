@@ -7,14 +7,18 @@ use Illuminate\Support\Facades\DB;
 
 class BookPrice extends Model
 {
-    protected $fillable = array('source_id', 'book_id', 'price');
+    protected $fillable = array('source_id', 'book_id', 'price', 'available_at');
+    protected $dates = ['available_at'];
+
 //    protected $primaryKey = ['source_id', 'book_id'];
 
-    public function source() {
+    public function source()
+    {
         return $this->belongsTo(Source::class);
     }
 
-    public function book() {
+    public function book()
+    {
         return $this->belongsTo(Book::class);
     }
 
@@ -24,7 +28,8 @@ class BookPrice extends Model
      * as long as Eloquent can't work with composite keys, we need to do manual delete
      * @return bool|null
      */
-    public function delete() {
+    public function delete()
+    {
         return DB::table('book_prices')->where('source_id', $this->source_id)->where('book_id', $this->book_id)->delete();
     }
 

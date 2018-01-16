@@ -118,7 +118,7 @@ class BookController extends Controller
      */
     public function gallery(Book $book)
     {
-        return response()->file(storage_path() . '/app/images/books/' . $book->image);
+        return response()->file(storage_path() . '/app/images/items/' . $book->image);
     }
 
     public function show(Book $book)

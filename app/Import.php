@@ -4,6 +4,7 @@ namespace App;
 
 use App\Import\Booksnook;
 use App\Import\Galina;
+use App\Import\Ksd;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Facades\Excel;
@@ -44,6 +45,14 @@ class Import extends Model
                 $importId = $this->id;
                 Excel::filter('chunk')->load($this->params['filename'])->chunk(10, function ($results) use ($importId) {
                     Galina::process($results, $importId);
+                });
+                $this->fresh();
+                $this->status = 'finished';
+                break;
+            case 'ksd':
+                $importId = $this->id;
+                Excel::filter('chunk')->load($this->params['filename'])->chunk(10, function ($results) use ($importId) {
+                    Ksd::process($results, $importId);
                 });
                 $this->fresh();
                 $this->status = 'finished';
@@ -137,20 +146,25 @@ class Import extends Model
      */
     public function updateBook($book, $raw)
     {
+//        dd($raw);
         $book->touch();
         // processing price
         $bp = $book->prices()->where('source_id', $this->source_id)->first();
         $raw['price'] = BookPrice::format($raw['price']);
+        $price_param = (isset($raw['available_at']) && !empty($raw['available_at'])) ? [
+            'price' => $raw['price'],
+            'available_at' => $raw['available_at'],
+        ] : $raw['price'];
         if (!is_null($bp)) {
             // The book has this source, updating
+            $book->updatePrices([$this->source_id => $price_param]);
             if ($bp->price != $raw['price']) {
-                $book->updatePrices([$this->source_id => $raw['price']]);
                 $this->updated++;
                 $this->addLog($book, 'updated', $raw['price']);
             }
         } else {
             // Creating new price entry
-            $book->updatePrices([$this->source_id => $raw['price']]);
+            $book->updatePrices([$this->source_id => $price_param]);
             $this->appeared++;
             $this->addLog($book, 'appeared', $raw['price']);
         }

@@ -41,6 +41,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/import/{import}/pricelist', 'ImportController@getPriceList')->name('import.getPriceList');
     Route::delete('/import/{import}/clean', 'ImportController@clean')->name('import.clean');
 
+    Route::get('/sandbox', 'ImportController@sandbox')->name('import.sandbox');
+
     Route::get('/authors', 'AuthorController@index')->name('author.list');
     Route::get('/author/{author}', 'AuthorController@show')->name('author.show');
 

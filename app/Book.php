@@ -2,6 +2,7 @@
 
 namespace App;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -16,13 +17,13 @@ class Book extends Model
         'sku',
         'image',
         'availability',
-        'isbn',
-        'format',
-        'bookbinding',
-        'year',
-        'pages',
-        'additional_notes',
+        'params',
     );
+
+    protected $casts = [
+        'details' => 'array',
+    ];
+
 
     /**
      * Establish one-two-many relationships with Source
@@ -69,33 +70,29 @@ class Book extends Model
         // Defaults
         $def = [
             'title' => '',
-            'isbn' => '',
             'description' => '',
-            'format' => '',
-            'year' => 0,
-            'pages' => 0,
             'image' => '',
-            'additional_notes' => '',
             'sku' => '',
             'availability' => 'A',
-            'bookbinding' => null,
+            'details' => []
         ];
         $params = array_merge($def, $params);
 
         // Getting raw fields
         $this->title = substr(trim($params['title']), 0, 255);
-        $this->isbn = trim($params['isbn']);
-        $this->description = $params['description'];
-        $this->format = $params['format'];
-        $this->year = $params['year'];
-        $this->pages = $params['pages'];
         $this->image = $params['image'];
+        $this->description = $params['description'];
+        $this->year = $params['year'];
         $this->availability = $params['availability'];
-        $this->additional_notes = $params['additional_notes'];
-        $this->bookbinding = $params['bookbinding'];
+
+        $this->details = $params['details'];
+//        $this->pages = $params['pages'];
+//        $this->image = $params['image'];
+//        $this->additional_notes = $params['additional_notes'];
+//        $this->bookbinding = $params['bookbinding'];
 
         // Making SKU. simply taking first ISBN and removing the characters
-        $this->sku = $params['sku'] ? $params['sku'] : static::skuFromIsbn($params['isbn']);
+        $this->sku = $params['sku'] ? $params['sku'] : static::skuFromIsbn($params['details']['isbn']);
 
         // processing Publisher
 //        $publisher = Publisher::firstOrCreate(['title' => $params['publisher']]);
@@ -174,31 +171,11 @@ class Book extends Model
     }
 
 
-//    private function audit($originals)
-//    {
-////        dd($originals, $this->source_id);
-//        if ((float)$originals['price'] != (float)$this->price) {
-//            $this->history()->create([
-//                'type' => 'price',
-//                'value' => $this->price,
-//            ]);
-//        }
-//
-//        if ($originals['availability'] != $this->availability) {
-//            $this->history()->create([
-//                'type' => 'availability',
-//                'value' => $this->availability,
-//            ]);
-//        }
-//        if ($originals['source_id'] != $this->source_id) {
-//            $this->history()->create([
-//                'type' => 'source',
-//                'value' => Source::where('id', $this->source_id)->pluck('title')->first(),
-//            ]);
-//        }
-//        return $this;
-//    }
-
+    /**
+     * Delete all additional data
+     * @return bool|null
+     * @throws \Exception
+     */
     public function delete()
     {
         if (!empty($this->image)) {
@@ -207,12 +184,6 @@ class Book extends Model
         return parent::delete();
     }
 
-//    public function save(array $options = [])
-//    {
-//        // Let's control availability once the book is updated
-//        parent::save($options);
-//        return $this;
-//    }
 
     /**
      * Mark book as unavailable
@@ -242,7 +213,7 @@ class Book extends Model
     {
 //        $this->availability = $state;
         $this->update(['availability' => $state]);
-        Log::info('Setting availability '. $state);
+        Log::info('Setting availability ' . $state);
         return $this;
     }
 
@@ -255,6 +226,9 @@ class Book extends Model
         return $this->availability !== 'NVN';
     }
 
+    /**
+     * Sets the correct availability flag
+     */
     public function checkAvailability()
     {
         $this->fresh(['prices']);
@@ -263,15 +237,23 @@ class Book extends Model
                 // So the book is available. Let's check that it has prices. If not, make it unavailable
                 if ($this->prices()->count() < 1) {
                     $this->makeUnavailable();
+                } elseif (!$this->hasRealPrice()) {
+                    $this->setAvailability('AN');
                 }
                 break;
             default:
                 // In any other case let's make it available if there are prices
-                if ($this->prices()->count() > 0 && $this->availability != 'A') {
-                    $this->makeAvailable();
+                if ($this->prices()->count() > 0) {
+                    if ($this->hasRealPrice()) {
+                        $this->makeAvailable();
+                    }
                 }
                 break;
         }
+    }
+
+    public function hasRealPrice() {
+        return $this->prices()->where('available_at', '<=', date('Y-m-d'))->count() > 0;
     }
 
 
@@ -282,7 +264,7 @@ class Book extends Model
      */
     public static function imagePathFromRaw($book)
     {
-        return substr(strtolower(str_slug($book['publisher'])) . '/book/' . str_slug($book['title']) . '/' . str_slug($book['title']) . '-' . str_random(5) . '-' . time(), 0, 245);
+        return substr(strtolower(str_slug($book['publisher'])) . '/' . str_slug($book['title']) . '/' . str_slug($book['title']) . '-' . str_random(5) . '-' . time(), 0, 245);
     }
 
     /**
@@ -312,17 +294,27 @@ class Book extends Model
      */
     public function updatePrices(array $prices)
     {
-        foreach ($prices as $source => $price) {
-            $price = BookPrice::format($price);
+        foreach ($prices as $source => $val) {
+            if (is_array($val)) {
+                $price = BookPrice::format($val['price']);
+                $avail = (isset($val['available_at']) && !is_null($val['available_at'])) ? $val['available_at'] : Carbon::now();
+            } else {
+                $price = BookPrice::format($val);
+                $avail = Carbon::now();
+            }
             if ($bp = $this->prices()->where('source_id', $source)->first()) {
                 if (!empty($price) && $price > 0) {
-                    $bp->update(['price' => $price]);
+                    $bp->update([
+                        'price' => $price,
+                        'available_at' => $avail,
+                    ]);
                 } else {
                     $bp->delete();
                 }
             } elseif (!empty($price) && $price > 0) {
                 $this->prices()->create([
                     'source_id' => $source,
+                    'available_at' => $avail,
                     'price' => $price,
                 ]);
             }

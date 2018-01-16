@@ -12,7 +12,11 @@
         <!-- book-info -->
         <div class="row">
             <div class="col-md-3 text-center">
-                <img src="{{route('book.gallery', $book)}}" class="w-100">
+                @if($book->image)
+                    <img src="{{route('book.gallery', $book)}}" class="w-100">
+                @else
+                    Изображения нет
+                @endif
             </div>
             <div class="col-md-5">
                 <dl>
@@ -38,13 +42,13 @@
             <div class="col-md-4">
                 <dl>
                     <dt class="col-sm-2">Формат:</dt>
-                    <dd class="col-sm-10">{{$book->format}}</dd>
+                    <dd class="col-sm-10">{{$book->details['format']}}</dd>
 
                     <dt class="col-sm-2">Год:</dt>
                     <dd class="col-sm-10">{{$book->year}}</dd>
 
                     <dt class="col-sm-2">Страниц:</dt>
-                    <dd class="col-sm-10">{{$book->pages}}</dd>
+                    <dd class="col-sm-10">{{$book->details['pages']}}</dd>
 
                     <dt class="col-sm-2">Добавлена:</dt>
                     <dd class="col-sm-10">{{$book->created_at->diffForHumans()}}</dd>
@@ -65,7 +69,7 @@
             <table class="table table-sm">
                 <thead class="thead-dark">
                 <tr>
-                    <th>Дата</th>
+                    <th>Доступна с</th>
                     <th>Источник</th>
                     <th>Цена</th>
                 </tr>
@@ -73,13 +77,13 @@
                 <tbody>
                 @foreach($book->prices->sortByDesc('created_at') as $bp)
                     <tr>
-                        <td>{{$bp->created_at->format('d/m/Y H:i:s')}}</td>
-                        <th scope="row">
+                        <td>{{$bp->available_at->format('d/m/Y')}}</td>
+                        <td scope="row">
                             {{$bp->source['title']}}
-                        </th>
-                        <th scope="row">
+                        </td>
+                        <td scope="row">
                             {{$bp->price}}
-                        </th>
+                        </td>
                     </tr>
                 @endforeach
                 </tbody>

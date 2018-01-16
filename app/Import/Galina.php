@@ -44,7 +44,7 @@ class Galina extends Model
                 $book->updatePrices([$import->source_id => $raw['price']]);
                 $book->attach($raw);
                 $import->created++;
-                $import->addLog($book, 'created');
+                $import->addLog($book, 'created', $raw['price']);
                 $import->update();
             }
         }
@@ -77,21 +77,26 @@ class Galina extends Model
         $book = [
             'ref' => $reference,
             'reference' => (int)$raw->reference,
+
             'title' => trim($raw['title']),
             'author' => trim($raw['author']),
-            'isbn' => trim($raw['isbn']),
-            'pages' => (int)$raw['pages'],
-            'year' => (int)$raw['year'],
-            'format' => trim($raw['format']),
             'price' => BookPrice::format($raw['price']),
-            'category' => null,
-            'series' => null,
             'description' => null,
             'image' => null,
-            'bookbinding' => null,
-            'additional_notes' => $raw['new'],
-            'publisher' => trim($raw['publisher']),
+            'year' => (int)$raw['year'],
             'availability' => 'A',
+
+            'category' => null,
+            'series' => null,
+            'publisher' => trim($raw['publisher']),
+
+            'details' => [
+                'format' => trim($raw['format']),
+                'isbn' => trim($raw['isbn']),
+                'pages' => (int)$raw['pages'],
+                'bookbinding' => null,
+                'additional_notes' => $raw['new'],
+            ],
         ];
 
         // Load the content
@@ -122,14 +127,14 @@ class Galina extends Model
         $book['series'] = static::exctract($html, 'Серия:');
 
         // Get the bookbinding
-        $book['bookbinding'] = static::exctract($html, 'Переплет:');
+        $book['details']['bookbinding'] = static::exctract($html, 'Переплет:');
 
         // Get cover
         $img = $SOURCEURL . trim($dom->getElementsByTagName('img')->item(0)->getAttribute('src'));
         @$contents = file_get_contents($img);
         if (!empty($contents)) {
             $book['image'] = Book::imagePathFromRaw($book) . substr($img, strrpos($img, '.'));
-            Storage::put('images/books/' . $book['image'], $contents);
+            Storage::put('images/items/' . $book['image'], $contents);
         }
 
         return $book;

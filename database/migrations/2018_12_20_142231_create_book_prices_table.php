@@ -17,6 +17,7 @@ class CreateBookPricesTable extends Migration
             $table->integer('source_id')->unsigned()->index();
             $table->integer('book_id')->unsigned()->index();
             $table->float('price');
+            $table->date('available_at')->nullable()->index();
             $table->timestamps();
 
             $table->primary(['book_id', 'source_id']);
