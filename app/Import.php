@@ -2,84 +2,23 @@
 
 namespace App;
 
+use App\Import\Booksnook;
+use App\Import\Galina;
+use App\Import\Ksd;
+use App\Import\Mahkha;
 use Illuminate\Database\Eloquent\Model;
-use Excel;
 use Illuminate\Support\Facades\Log;
-use Storage;
+use Maatwebsite\Excel\Facades\Excel;
 
 class Import extends Model
 {
-    protected $fillable = ['source_id', 'filename', 'limit_publishers'];
+    protected $fillable = ['source_id', 'params', 'limit_publishers'];
 
-    public function start()
-    {
-        set_time_limit(0);
-        $import = $this;
-        $import->status = 'started';
-        $import->update();
-        $limitations = false;
-        if (!empty($this->limit_publishers)) {
-            $limitations = array_map(function ($a) {
-                return mb_strtolower(trim($a));
-            }, explode('||', $this->limit_publishers));
-        }
-        Excel::filter('chunk')->load($import->filename)->chunk(1000, function ($results) use ($import, $limitations) {
-            $import = \App\Import::find($import->id);
-            foreach ($results as $raw) {
-                $import->total++;
-                if (empty(trim($raw['reference'])) ||
-                    empty(trim($raw['isbn'])) ||
-                    empty($raw['price']) ||
-                    !is_numeric($raw['price']) ||
-                    // filter out by Publisher
-                    (!empty($limitations) && count($limitations) && !in_array(mb_strtolower(trim($raw['publisher'])), $limitations))
-                ) {
-                    $import->skipped++;
-                    $import->update();
-                    continue;
-                }
-                $raw['price'] = number_format((float)$raw['price'], 2, '.', '');
 
-                $sku = \App\Book::skuFromIsbn($raw['isbn']);
+    protected $casts = [
+        'params' => 'array',
+    ];
 
-                $books = \App\Book::where('sku', '=', $sku)->get();
-                if ($books->count() > 0) {
-                    // Updating existing
-                    foreach ($books->all() as $book) {
-                        if ((number_format((float)$book->price, 2, '.', '')) != $raw['price']) {
-                            $book->price = $raw['price'];
-                            $book->priceHistory()->create([
-                                'price' => $book->price
-                            ]);
-                            $import->updated++;
-                            $import->addLog($book, 'updated');
-                            $book->update();
-                        }
-                        else {
-                            // Simply update the updated_at field so we can do the clean up later
-                            $book->touch();
-                        }
-                    }
-                } else {
-                    // Creating new
-                    $raw = \App\ImportBook::process($raw);
-                    $raw['source'] = $import->source_id;
-                    $book = new \App\Book;
-                    $book->prepare($raw)->save();
-                    $book->attach($raw);
-                    $book->priceHistory()->create([
-                        'price' => $book->price
-                    ]);
-                    $import->created++;
-                    $import->addLog($book, 'created');
-                }
-                $import->update();
-            }
-        });
-        $import = \App\Import::find($import->id);
-        $import->status = 'finished';
-        $import->update();
-    }
 
     public function source()
     {
@@ -91,15 +30,67 @@ class Import extends Model
         return $this->hasMany(ImportLog::class);
     }
 
-    public function addLog($book, $status)
+    //
+
+    /**
+     * Start processing
+     */
+    public function start()
+    {
+        set_time_limit(0);
+        $this->status = 'started';
+        $this->update();
+
+        switch ($this->source['driver']) {
+            case 'galina':
+                $importId = $this->id;
+                Excel::filter('chunk')->load($this->params['filename'])->chunk(10, function ($results) use ($importId) {
+                    Galina::process($results, $importId);
+                });
+                $this->fresh();
+                $this->status = 'finished';
+                break;
+
+            case 'ksd':
+                $importId = $this->id;
+                Excel::filter('chunk')->load($this->params['filename'])->chunk(10, function ($results) use ($importId) {
+                    Ksd::process($results, $importId);
+                });
+                $this->fresh();
+                $this->status = 'finished';
+                break;
+
+            case 'mahkha':
+                $importId = $this->id;
+                Excel::filter('chunk')->load($this->params['filename'])->chunk(10, function ($results) use ($importId) {
+                    Mahkha::process($results, $importId);
+                });
+                $this->fresh();
+                $this->status = 'finished';
+                break;
+
+            case 'booksnook':
+                Booksnook::process($this);
+                $this->status = 'finished';
+                break;
+
+            default:
+                $this->status = 'failed';
+        }
+//        dd($this->params);
+
+        $this->update();
+    }
+
+    public function addLog($item, $status, $price = 0)
     {
         $this->logs()->create([
-            'title' => mb_convert_encoding(substr($book->title, 0, 255), 'UTF-8', 'UTF-8'),
-            'isbn' => $book->isbn,
-            'price' => $book->price,
-            'publisher' => $book->publisher['title'],
-            'author' => mb_convert_encoding(substr(implode(', ', $book->authors()->pluck('name')->all()), 0, 255), 'UTF-8', 'UTF-8'),
-            'sku' => $book->sku,
+            'details' => [
+                'id' => $item->id,
+                'isbn' => $item->details['isbn'],
+                'title' => $item->title,
+                'price' => $price,
+            ],
             'status' => $status,
         ]);
     }
@@ -109,15 +100,20 @@ class Import extends Model
      */
     public function remove()
     {
-        $books = \App\Book::where('updated_at', '<', $this->created_at)->where('source_id', '=', $this->source_id);
+        Log::info('Cleaning up...');
+        if (!$this->shouldClean()) {
+            Log::info('Cleanup is not needed');
+            return $this;
+        }
+        $books = \App\Book::withSource($this->source_id)->where('books.updated_at', '<', $this->created_at);
 
         // Limit to the publishers that were processed in this run
-        if (!empty($this->limit_publishers && false)) {
+        if (!empty($this->limit_publishers && $this->clear == 'publishers')) {
             $publishers = explode('||', $this->limit_publishers);
             if (count($publishers)) {
                 $publishers = \App\Publisher::whereIn('title', $publishers);
                 if ($publishers->count()) {
-                    $books->whereIn('publisher_id', $publishers->pluck('id')->all());
+                    $books->publishers()->whereIn('id', $publishers->pluck('id')->all());
                 }
             }
         }
@@ -130,11 +126,12 @@ class Import extends Model
             $pn = 0;
             $pp = 100;
             while ($total > 0) {
-                foreach ($books->skip($pn*$pp)->take($pp)->get()->all() as $book) {
+                foreach ($books->skip($pn * $pp)->take($pp)->get()->all() as $book) {
                     $this->addLog($book, 'deleted');
                     $this->removed++;
-                    $this->update();
-                    $book->delete();
+//                    $book->delete();
+                    $book->prices()->where('source_id', $this->source_id)->delete();
+                    $book->makeUnavailable();
                 }
                 $pn++;
                 $total -= $pp;
@@ -142,5 +139,49 @@ class Import extends Model
             $this->status = 'finished';
             $this->update();
         }
+    }
+
+    /**
+     * Defines if the import needs to clear the database after run
+     * @return bool
+     */
+    public function shouldClean()
+    {
+        return !empty($this->clear) && $this->clear != 'none';
+    }
+
+
+    /**
+     * update book while import
+     * @param $book
+     * @param $raw
+     * @return mixed
+     */
+    public function updateBook($book, $raw)
+    {
+//        dd($raw);
+        $book->touch();
+        // processing price
+        $bp = $book->prices()->where('source_id', $this->source_id)->first();
+        $raw['price'] = BookPrice::format($raw['price']);
+        $price_param = (isset($raw['available_at']) && !empty($raw['available_at'])) ? [
+            'price' => $raw['price'],
+            'available_at' => $raw['available_at'],
+        ] : $raw['price'];
+        if (!is_null($bp)) {
+            // The book has this source, updating
+            $book->updatePrices([$this->source_id => $price_param]);
+            if ($bp->price != $raw['price']) {
+                $this->updated++;
+                $this->addLog($book, 'updated', $raw['price']);
+            }
+        } else {
+            // Creating new price entry
+            $book->updatePrices([$this->source_id => $price_param]);
+            $this->appeared++;
+            $this->addLog($book, 'appeared', $raw['price']);
+        }
+        $this->update();
+        return $book;
     }
 }

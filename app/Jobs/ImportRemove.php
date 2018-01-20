@@ -32,7 +32,8 @@ class ImportRemove implements ShouldQueue
      */
     public function handle()
     {
-        Log::info('Removing old items');
+        Log::info('Cleaning up...');
         $this->import->remove();
+        Log::info('Cleaning is complete');
     }
 }

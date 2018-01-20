@@ -19,12 +19,12 @@
                 @endif
             </dd>
         </dl>
-        @if(!empty($import->limit_publishers))
+        @if(!empty($import->params['limit_publishers']))
             <hr>
             <dl class="row">
                 <dt class="col-sm-2">Издательства:</dt>
                 <dd class="col-sm-10">
-                    @foreach(explode('||', $import->limit_publishers) as $publisher)
+                    @foreach($import->params['limit_publishers'] as $publisher)
                         <span class="badge badge-secondary">{{$publisher}}</span>
                     @endforeach
                 </dd>
@@ -47,16 +47,21 @@
     </div>
     <ul class="nav nav-tabs my-3">
         <li class="nav-item">
-            <a class="nav-link @if(request('status', 'created') == 'created') active @endif" href="?status=created">Добавлено</a>
+            <a class="nav-link @if(request('status', 'created') == 'created') active @endif" href="?status=created">Создано</a>
+        </li>
+
+        <li class="nav-item">
+            <a class="nav-link @if(request('status', 'created') == 'appeared') active @endif" href="?status=appeared">Появились</a>
+        </li>
+
+        <li class="nav-item">
+            <a class="nav-link @if(request('status') == 'updated') active @endif" href="?status=updated">Обновлено</a>
         </li>
 
         <li class="nav-item">
             <a class="nav-link @if(request('status') == 'deleted') active @endif" href="?status=deleted">Удалено</a>
         </li>
 
-        <li class="nav-item">
-            <a class="nav-link @if(request('status') == 'updated') active @endif" href="?status=updated">Обновлено</a>
-        </li>
     </ul>
     <div class="card">
         @if(count($logs))
@@ -65,19 +70,19 @@
                 <tr>
                     <th scope="col">Название</th>
                     <th scope="col">isbn</th>
-                    <th scope="col">Автор</th>
-                    <th scope="col">Издательство</th>
+                    {{--<th scope="col">Автор</th>--}}
+                    {{--<th scope="col">Издательство</th>--}}
                     <th scope="col">Цена</th>
                 </tr>
                 </thead>
                 <tbody>
                 @foreach($logs->all() as $log)
                     <tr>
-                        <th scope="row">{{$log->title}}</th>
-                        <td nowrap="">{{$log->isbn}}</td>
-                        <td>{{$log->author}}</td>
-                        <td>{{$log->publisher}}</td>
-                        <td>{{ number_format($log->price, 2, ',', '.') }}</td>
+                        <th scope="row">{{$log->details['title']}}</th>
+                        <td nowrap="">{{$log->details['isbn']}}</td>
+                        {{--<td>{{$log->author}}</td>--}}
+                        {{--<td>{{$log->publisher}}</td>--}}
+                        <td>{{ number_format($log->details['price'], 2, ',', '.') }}</td>
                     </tr>
                 @endforeach
                 </tbody>

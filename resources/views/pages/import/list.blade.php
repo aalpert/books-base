@@ -9,13 +9,13 @@
                 <tr>
                     <th scope="col">#</th>
                     <th scope="col">Источник</th>
-                    <th scope="col">Всего</th>
+                    <th scope="col">Обработано</th>
                     <th scope="col">Пропущено</th>
-                    <th scope="col">Добавлено</th>
+                    <th scope="col">Появились</th>
+                    <th scope="col">Создано</th>
                     <th scope="col">Обновлено</th>
-                    <th scope="col">Удалено</th>
-                    <th scope="col">Запущен</th>
-                    <th scope="col">Завершен</th>
+                    <th scope="col">Исчезло</th>
+                    <th scope="col">Статус</th>
                     <th scope="col" width="1%">&nbsp</th>
                 </tr>
                 </thead>
@@ -28,16 +28,16 @@
 
                         <td>{{$import->total}}</td>
                         <td>{{$import->skipped}}</td>
+                        <td>{{$import->appeared}}</td>
                         <td>{{$import->created}}</td>
                         <td>{{$import->updated}}</td>
                         <td>{{$import->removed}}</td>
 
-                        <td>{{$import->created_at->diffForHumans()}}</td>
                         <td>
                             @if($import->status === 'started')
                                 Обрабатывается... <i class="fas fa-sync fa-spin"></i>
                             @else
-                                {{$import->updated_at->diffForHumans()}}
+                                Завершен
                             @endif
                         </td>
                         <td nowrap="">

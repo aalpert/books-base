@@ -1,4 +1,29 @@
 <div class="card">
+
+    <form method="get">
+        <div class="row">
+            <div class="col-md-3 my-2">
+                <input class="form-control" type="text" placeholder="Название" name="title" value="{{request('title')}}">
+            </div>
+            <div class="col-md-3 my-2">
+                <input class="form-control" type="text" placeholder="ISBN" name="isbn" value="{{request('isbn')}}">
+            </div>
+            <div class="col-md-3 my-2">
+                <select class="form-control" name="availability">
+                    <option value="">-- Наличие --</option>
+                    <option value="A" @if(request('availability') == 'A') selected="selected" @endif>@lang('book.availability_A')</option>
+                    <option value="Z" @if(request('availability') == 'Z') selected="selected" @endif>@lang('book.availability_Z')</option>
+                    <option value="AN" @if(request('availability') == 'AN') selected="selected" @endif>@lang('book.availability_AN')</option>
+                    <option value="SB" @if(request('availability') == 'SB') selected="selected" @endif>@lang('book.availability_SB')</option>
+                    <option value="NVN" @if(request('availability') == 'NVN') selected="selected" @endif>@lang('book.availability_NVN')</option>
+                </select>
+            </div>
+            <div class="col-md-1 my-2">
+                <input type="submit" class="btn btn-primary" value="Фильтровать">
+            </div>
+        </div>
+    </form>
+
     @if(count($books))
         <table class="table table-hover table-responsive">
             <thead>
@@ -28,7 +53,8 @@
                         {{ $book->series['title'] }}
                     </td>
                     <td>
-                        {{ $book->publisher['title'] }}
+                        {{ implode(', ', $book->publishers()->pluck('title')->all()) }}
+{{--                        {{ $book->publisher['title'] }}--}}
                     </td>
                     <!-- Action Items -->
                     <td nowrap="">
@@ -54,7 +80,11 @@
             </tbody>
         </table>
         <div class="row justify-content-center">
-            {{$books->links()}}
+            {{$books->appends([
+            'title'=>request('title'),
+            'isbn'=>request('isbn'),
+            'availability'=>request('availability'),
+            ])->links()}}
         </div>
     @else
         <div class="text-center">
@@ -92,7 +122,7 @@
             var modal = $(this);
             modal.find('.modal-title').text(bookLink.data('title'));
             modal.find('.modal-body').html('<i class="fas fa-spinner fa-spin"></i>');
-            axios.get('/book/'+bookLink.data('book-id')+'/show').then(function(response) {
+            axios.get('/book/'+bookLink.data('book-id')).then(function(response) {
                 modal.find('.modal-body').html(response.data);
             });
         })

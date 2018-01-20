@@ -15,7 +15,7 @@ class CategoryController extends Controller
 
     public function show(Category $category)
     {
-        $books = $category->books()->paginate(50);
+        $books = $category->books()->filter(request(['title', 'isbn', 'availability']))->paginate(50);
         return view('pages.categories.show', compact('category', 'books'));
     }
 }

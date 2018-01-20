@@ -13,6 +13,8 @@ use Illuminate\Http\Request;
 |
 */
 
-Route::middleware('auth:api')->get('/user', function (Request $request) {
-    return $request->user();
-});
+//Route::middleware(['auth:api'])->group(function () {
+    Route::get('/books', 'Api\BooksController@index');
+    Route::get('/book/{sku}/image', 'Api\BooksController@image');
+//});
+

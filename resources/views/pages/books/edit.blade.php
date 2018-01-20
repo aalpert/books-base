@@ -39,7 +39,7 @@
 
             <div class="form-group">
                 <label for="bookPublisher">Издательство</label>
-                <input type="text" class="form-control" name="publisher" value="{{$book->publisher['title']}}"
+                <input type="text" class="form-control" name="publisher" value="{{ implode('||', $book->publishers()->pluck('title')->all()) }}"
                        id="bookPublisher">
             </div>
 
@@ -70,17 +70,30 @@
             </div>
 
             <div class="form-group">
-                <label for="bookPrice">Цена</label>
-                <input type="text" class="form-control" name="price" value="{{$book->price}}" id="bookPrice">
+                <label for="bookFormat">Переплет</label>
+                <input type="text" class="form-control" name="bookbinding" value="{{$book->bookbinding}}" id="bookBookbinding">
             </div>
 
+            <fieldset class="card form-group p-2">
+                <legend><small>Цены</small></legend>
+                @foreach($sources->all() as $source)
+                    <div class="form-group row">
+                        <label class="col-sm-2 col-form-label">{{$source->title}}</label>
+                        <div class="col-sm-2">
+                            <input type="text" class="form-control" name="price[{{$source->id}}]" value="{{$prices[$source->id]}}">
+                        </div>
+                    </div>
+                @endforeach
+            </fieldset>
+
             <div class="form-group">
-                <label for="bookSource">Источник</label>
-                <select class="form-control" name="source" id="bookSource">
-                    @foreach($sources->all() as $source)
-                        <option value="{{$source->id}}"
-                                @if($source->id === $book->source_id) selected="selected" @endif>{{$source->title}}</option>
-                    @endforeach
+                <label>Наличие</label>
+                <select class="form-control" name="availability">
+                    <option value="A" @if($book->availability == 'A') selected="selected" @endif>@lang('book.availability_A')</option>
+                    <option value="Z" @if($book->availability == 'Z') selected="selected" @endif>@lang('book.availability_Z')</option>
+                    <option value="AN" @if($book->availability == 'AN') selected="selected" @endif>@lang('book.availability_AN')</option>
+                    <option value="SB" @if($book->availability == 'SB') selected="selected" @endif>@lang('book.availability_SB')</option>
+                    <option value="NVN" @if($book->availability == 'NVN') selected="selected" @endif>@lang('book.availability_NVN')</option>
                 </select>
             </div>
 

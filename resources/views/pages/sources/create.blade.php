@@ -12,6 +12,15 @@
                 <label for="exampleInputEmail1">Название</label>
                 <input type="text" class="form-control" name="title" id="sourceTitle">
             </div>
+
+            <div class="form-group">
+                <label>Драйвер</label>
+                <select name="driver" class="form-control">
+                    <option value="galina" selected>Галина</option>
+                    <option value="booksnook">Booksnook</option>
+                </select>
+            </div>
+
             <button type="submit" class="btn btn-primary">Сохранить</button>
         </form>
     </div>

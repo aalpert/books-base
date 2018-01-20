@@ -33,13 +33,25 @@
                 <a class="nav-link" href="{{route('publisher.list')}}">Издательства</a>
             </li>
 
-            <li class="nav-item">
-                <a class="nav-link" href="{{route('import.list')}}">Импорт</a>
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" id="navbarImportDropdown" data-toggle="dropdown" href="#">Импорт</a>
+                <div class="dropdown-menu" aria-labelledby="navbarImportDropdown">
+                    <a class="dropdown-item" href="{{route('import.list')}}">История</a>
+                    <div class="dropdown-divider"></div>
+                    <a class="dropdown-item" href="{{route('import.create')}}">Новый Прайс</a>
+                    <a class="dropdown-item" href="{{route('import.create.booksnook')}}">Booksnook</a>
+                </div>
             </li>
         </ul>
-        {{--<form class="form-inline mt-2 mt-md-0">--}}
-        {{--<input class="form-control mr-sm-2" type="text" placeholder="Search" aria-label="Search">--}}
-        {{--<button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>--}}
-        {{--</form>--}}
+
+        <ul class="navbar-nav ml-auto">
+            <li class="nav-item">
+                <a class="nav-link" href="">{{Auth::user()->name}}</a>
+            </li>
+            <li>
+                <a class="nav-link" href="{{route('logout')}}"><i class="fas fa-sign-in-alt"></i></a>
+            </li>
+        </ul>
+
     </div>
 </nav>

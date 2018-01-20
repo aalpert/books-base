@@ -16,13 +16,8 @@ class CreateImportLogsTable extends Migration
         Schema::create('import_logs', function (Blueprint $table) {
             $table->increments('id');
             $table->integer('import_id')->unsigned()->index();
-            $table->string('title')->index();
-            $table->string('isbn')->index();
-            $table->string('sku');
-            $table->string('publisher')->index();
-            $table->string('author')->nullable();
-            $table->float('price');
-            $table->enum('status', ['created', 'updated', 'deleted']);
+            $table->json('details');
+            $table->enum('status', ['created', 'appeared', 'updated', 'deleted']);
             $table->timestamps();
 
             $table->foreign('import_id')->references('id')->on('imports')->onDelete('cascade');

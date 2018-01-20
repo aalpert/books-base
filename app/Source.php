@@ -6,9 +6,9 @@ use Illuminate\Database\Eloquent\Model;
 
 class Source extends Model
 {
-    public function books()
+    public function bookPrices()
     {
-        return $this->hasMany(Book::class);
+        return $this->hasMany(BookPrice::class);
     }
 
     public function imports()

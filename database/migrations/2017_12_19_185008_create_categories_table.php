@@ -17,8 +17,12 @@ class CreateCategoriesTable extends Migration
             $table->increments('id')->unique();
             $table->string('title');
 
+            $table->integer('parent_id')->nullable();
+            $table->integer('lft')->nullable();
+            $table->integer('rgt')->nullable();
+            $table->integer('depth')->nullable();
+
             $table->index(['title']);
-//            $table->primary(['id']);
 
             $table->timestamps();
         });

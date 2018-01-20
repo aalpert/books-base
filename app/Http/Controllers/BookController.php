@@ -14,7 +14,7 @@ class BookController extends Controller
      */
     public function index()
     {
-        $books = Book::paginate(50);
+        $books = Book::filter(request(['title', 'isbn', 'availability']))->paginate(50);
         return view('pages.books.list', compact('books'));
     }
 
@@ -32,8 +32,7 @@ class BookController extends Controller
     {
         $this->validate(request(), [
             'title' => 'required|max:255',
-            'source' => 'required',
-            'price' => 'required|regex:/^\d*(\.\d{1,2})?$/',
+//            'price' => 'required|regex:/^\d*(\.\d{1,2})?$/',
             'pages' => 'integer',
             'year' => 'integer',
             'isbn' => 'required',
@@ -41,10 +40,15 @@ class BookController extends Controller
         ]);
 
         $book = new Book;
-        $raw = request(['title', 'isbn', 'price', 'description', 'format', 'year', 'pages', 'source', 'publisher', 'series']);
+        $raw = request(['title', 'isbn', 'description', 'format', 'year', 'pages', 'source', 'publisher', 'series', 'availability', 'bookbinding']);
+//        dd(request('price'));
         $book->prepare($raw)->save();
 
-        $book->attach(request(['author', 'category']));
+        if (is_array(request('price'))) {
+            $book->updatePrices(request('price'));
+        }
+
+        $book->attach(request(['author', 'category', 'publisher']));
 
         session()->flash('success_message', 'Книга добавлена');
         return redirect()->route('book.list');
@@ -71,8 +75,12 @@ class BookController extends Controller
      */
     public function edit(Book $book)
     {
+        $prices = [];
         $sources = Source::all();
-        return view('pages.books.edit', compact('book', 'sources'));
+        foreach($sources as $source) {
+            $prices[$source->id] = $book->prices()->where('source_id', $source->id)->pluck('price')->first();
+        }
+        return view('pages.books.edit', compact('book', 'sources', 'prices'));
     }
 
     /**
@@ -83,19 +91,21 @@ class BookController extends Controller
     {
         $this->validate(request(), [
             'title' => 'required|max:255',
-            'source' => 'required',
-            'price' => 'required|regex:/^\d*(\.\d{1,2})?$/',
             'pages' => 'integer',
             'year' => 'integer',
             'isbn' => 'required',
-            'publisher' => 'required',
         ]);
 
         $book = Book::findOrFail(request('id'));
-        $raw = request(['title', 'isbn', 'price', 'description', 'format', 'year', 'pages', 'source', 'publisher', 'series']);
+        $raw = request(['title', 'isbn', 'price', 'description', 'format', 'year', 'pages', 'source', 'publisher', 'series', 'availability', 'bookbinding']);
+        $raw['image'] = $book->image;
         $book->prepare($raw)->update();
 
-        $book->attach(request(['author', 'category']));
+        $book->attach(request(['author', 'category', 'publisher']));
+
+        if (is_array(request('price'))) {
+            $book->updatePrices(request('price'));
+        }
 
         session()->flash('success_message', 'Книга обновлена');
         return redirect()->route('book.list');
@@ -108,11 +118,11 @@ class BookController extends Controller
      */
     public function gallery(Book $book)
     {
-        return response()->file(storage_path() . '/app/images/covers/' . $book->image);
+        return response()->file(storage_path() . '/app/images/items/' . $book->image);
     }
 
     public function show(Book $book)
     {
-        return view('pages.books.show', compact('book', 'priceHistory'));
+        return view('pages.books.show', compact('book'));
     }
 }
