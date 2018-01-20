@@ -113,7 +113,7 @@ class Import extends Model
             if (count($publishers)) {
                 $publishers = \App\Publisher::whereIn('title', $publishers);
                 if ($publishers->count()) {
-                    $books->whereIn('publisher_id', $publishers->pluck('id')->all());
+                    $books->publishers()->whereIn('id', $publishers->pluck('id')->all());
                 }
             }
         }

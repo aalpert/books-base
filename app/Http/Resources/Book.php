@@ -25,35 +25,36 @@ class Book extends Resource
         $categories = [];
         foreach ($this->categories as $c) {
             $categories[] = [
-                'name' => $c['title'],
+                'title' => $c['title'],
             ];
         }
+
+        $publishers = [];
+        foreach ($this->publishers as $p) {
+            $publishers[] = [
+                'title' => $p['title'],
+                'description' => $p['description'],
+            ];
+        }
+
+        $details = array_merge($this->details, [
+            'series' => $this->series['title'],
+            'authors' => $authors,
+            'categories' => $categories,
+            'publishers' => $publishers,
+        ]);
 
         return [
             // Basic fields
             'title' => $this->title,
-            'year' => $this->year,
-            'format' => $this->format,
-            'pages' => $this->pages,
-            'sku' => $this->sku,
-            'isbn' => $this->isbn,
-            'price' => $this->price,
             'image' => $this->image,
-            'additional_notes' => $this->additional_notes,
-
-            'publisher' => [
-                'title' => $this->publisher['title'],
-                'description' => $this->publisher['description']
-            ],
-
-            'series' => [
-                'title' => $this->series['title'],
-            ],
-
-            'authors' => $authors,
-            'categories' => $categories,
-
+            'sku' => $this->sku,
+            'year' => $this->year,
+            'availability' => $this->availability,
+            'price' => $this->prices()->orderBy('price', 'asc')->pluck('price')->first(),
             'description' => $this->description,
+
+            'details' => $details,
         ];
     }
 }

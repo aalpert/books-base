@@ -7,6 +7,7 @@ use App\Http\Resources\BookCollection;
 use App\Publisher;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Log;
 
 class BooksController extends Controller
 {
@@ -17,17 +18,23 @@ class BooksController extends Controller
      */
     public function index(Request $request)
     {
-        $books = Book::with('authors')->with('categories')->where('availability', '<>', 'NVN');
-        if (!empty(request('publishers', ''))) {
-            $publishers = explode('||', request('publishers', ''));
-            if (count($publishers)) {
-                $publishers = Publisher::whereIn('title', $publishers);
-                if ($publishers->count()) {
-                    $books->whereIn('publisher_id', $publishers->pluck('id')->all());
-                }
-            }
+        $books=Book::distinct()
+            ->with('series')
+            ->with('publishers')
+            ->where('availability', '<>', 'NVN');
+        if (!empty(request('publishers'))) {
+            $books->whereHas('publishers', function ($q) {
+                $q->where('title', request('publishers'));
+            });
         }
-        $books = $books->paginate(50);
+
+        if (!empty(request('series'))) {
+            $books->whereHas('series', function ($q) {
+                $q->where('title', request('series'));
+            });
+        }
+
+        $books = $books->paginate(request('pp', 50));
         return new BookCollection($books);
     }
 
@@ -39,7 +46,7 @@ class BooksController extends Controller
     {
         $image = Book::where('sku', $sku)->pluck('image')->first();
         if ($image) {
-            return response()->file(storage_path() . '/app/images/covers/' . $image);
+            return response()->file(storage_path() . '/app/images/items/' . $image);
         }
         return response('Not Found', 404);
     }

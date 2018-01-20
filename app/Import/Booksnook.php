@@ -74,6 +74,7 @@ class Booksnook extends Model
                             $book = new Book;
                             $book->prepare($raw)->save();
                             $book->attach($raw);
+                            $book->checkAvailability();
                             $import->created++;
                             $import->update();
                             $import->addLog($book, 'created');

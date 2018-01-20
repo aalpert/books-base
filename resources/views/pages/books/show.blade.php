@@ -69,6 +69,7 @@
         <!-- END: book-info -->
     </div>
     <div class="tab-pane fade" id="book-price" role="tabpanel">
+        <h5>@lang('book.availability_'.$book->availability)</h5>
         @if(count($book->prices))
             <table class="table table-sm">
                 <thead class="thead-dark">
@@ -93,7 +94,7 @@
                 </tbody>
             </table>
         @else
-            Книги нет в наличии
+            Информации о ценах нет
         @endif
     </div>
 </div>
