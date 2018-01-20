@@ -6,7 +6,7 @@
     <meta name="description" content="">
     <meta name="csrf-token" content="{{csrf_token()}}">
 
-    <title>Books Base</title>
+    <title>Platform</title>
 
     <!-- Bootstrap core CSS -->
     <link href="{{asset('css/app.css')}}" rel="stylesheet">
